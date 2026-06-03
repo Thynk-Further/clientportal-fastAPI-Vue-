@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from app.config import settings
 from app.core.openapi import openapi_tags
 from app.core.exceptions import CPException, cp_exception_handler, http_exception_handler
-from app.routers import auth, users, clients, projects, deliverables, files, approvals
+from app.routers import auth, users, clients, projects, deliverables, files, approvals, websockets, messages
 
 def create_app() -> FastAPI:
     docs_url = "/docs" if settings.ENVIRONMENT != "production" else None
@@ -50,6 +50,8 @@ def create_app() -> FastAPI:
     app.include_router(deliverables.router, prefix="/api/v1")
     app.include_router(files.router, prefix="/api/v1/files")
     app.include_router(approvals.router, prefix="/api/v1")
+    app.include_router(messages.router, prefix="/api/v1")
+    app.include_router(websockets.router)
 
     return app
 

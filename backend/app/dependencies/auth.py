@@ -48,3 +48,29 @@ async def get_current_user(
         )
         
     return user
+
+security_optional = HTTPBearer(auto_error=False)
+
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_optional),
+    db: AsyncSession = Depends(get_db)
+) -> User | None:
+    if not credentials:
+        return None
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    
+    if not payload:
+        return None
+        
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        return None
+        
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except ValueError:
+        return None
+        
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
