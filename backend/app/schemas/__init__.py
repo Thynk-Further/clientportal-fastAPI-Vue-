@@ -7,3 +7,4 @@ from .file_upload import PresignedUrlRequest, PresignedUrlResponse, FileUploadCr
 from .approval import ApprovalCreate, ApprovalRead
 from .message import MessageCreate, MessageRead
 from .invoice import InvoiceCreate, InvoiceRead, InvoicePayResponse
+from .time_entry import TimeEntryStart, TimeEntryManual, TimeEntryRead
