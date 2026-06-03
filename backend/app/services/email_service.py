@@ -26,3 +26,31 @@ def send_magic_link(email: str, portal_url: str, client_name: str, freelancer_na
             
     except Exception as e:
         print(f"Failed to send email to {email}: {e}")
+
+def send_templated_email(to_email: str, template_name: str, context: dict) -> None:
+    try:
+        subject = context.get("subject", "Notification from ClientPortal")
+        
+        html_content = ""
+        for key, value in context.items():
+            if key != "subject":
+                if "url" in key.lower():
+                    html_content += f'<p><a href="{value}">{value}</a></p>'
+                else:
+                    html_content += f"<p><strong>{key}:</strong> {value}</p>"
+        
+        params = {
+            "from": "ClientPortal <onboarding@resend.dev>",
+            "to": [to_email],
+            "subject": subject,
+            "html": f"<p>You have a new update.</p>{html_content}"
+        }
+        
+        if resend.api_key and resend.api_key.startswith("re_") and "replace_me" not in resend.api_key:
+            email_response = resend.Emails.send(params)
+            print(f"Sent templated email to {to_email}. ID: {email_response.get('id', 'unknown')}")
+        else:
+            print(f"MOCK EMAIL: Would have sent templated email '{template_name}' to {to_email} with context: {context}")
+            
+    except Exception as e:
+        print(f"Failed to send email to {to_email}: {e}")
