@@ -9,3 +9,6 @@ from . import websockets
 from . import messages
 from . import invoices
 from . import webhooks
+from . import time_entries
+from . import forms
+from . import portal_forms
