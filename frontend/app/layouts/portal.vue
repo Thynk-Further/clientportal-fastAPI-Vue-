@@ -1,26 +1,39 @@
 <template>
-  <div class="min-h-screen bg-gray-50 font-sans">
-    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded bg-indigo-600 shadow-sm flex items-center justify-center text-white font-bold">
-            <!-- Logo placeholder -->
-            B
+  <div class="min-h-screen bg-gray-50 flex flex-col font-sans">
+    
+    <!-- Portal Header (White-labeled) -->
+    <header class="bg-white border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          
+          <!-- Branding Area (Will be dynamic later) -->
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
+              CP
+            </div>
+            <span class="font-bold text-gray-900 text-lg tracking-tight">ClientPortal</span>
           </div>
-          <span class="font-semibold text-gray-900 tracking-tight">Brand Name</span>
+
+          <!-- Client Info -->
+          <div class="flex items-center gap-4">
+            <span class="text-sm font-medium text-gray-500">Client Access</span>
+          </div>
+
         </div>
-        <nav class="flex items-center gap-6 text-sm font-medium text-gray-600">
-          <a href="#" class="text-indigo-600 transition-colors">Deliverables</a>
-          <a href="#" class="hover:text-gray-900 transition-colors">Forms</a>
-          <a href="#" class="hover:text-gray-900 transition-colors">Invoices</a>
-        </nav>
       </div>
     </header>
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Portal Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <slot />
     </main>
-    <footer class="mt-auto py-6 text-center text-sm text-gray-400">
-      <p>Powered by ClientPortal</p>
+    
+    <!-- Portal Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center items-center">
+        <p class="text-xs text-gray-400">Powered by ClientPortal</p>
+      </div>
     </footer>
+
   </div>
 </template>
