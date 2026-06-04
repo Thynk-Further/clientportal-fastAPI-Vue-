@@ -37,7 +37,7 @@
 
     <!-- Projects Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="project in projects" :key="project.id" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow group relative cursor-pointer flex flex-col">
+      <NuxtLink v-for="project in projects" :key="project.id" :to="'/projects/' + project.id" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow group relative cursor-pointer flex flex-col block">
         <div class="flex justify-between items-start mb-2">
           <h3 class="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors line-clamp-1">{{ project.name }}</h3>
           <!-- Status Badge -->
@@ -61,7 +61,7 @@
           </div>
           <span class="text-xs text-gray-400 font-medium">Created {{ new Date(project.created_at).toLocaleDateString() }}</span>
         </div>
-      </div>
+      </NuxtLink>
     </div>
 
     <!-- The Add Project Modal Component -->
