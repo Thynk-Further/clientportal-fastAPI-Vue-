@@ -89,3 +89,26 @@ async def update_project(
     await db.refresh(project)
     
     return project
+
+from app.models.message import Message
+from app.schemas.message import MessageRead
+
+@router.get(
+    "/{project_id}/messages",
+    response_model=List[MessageRead],
+    summary="Get project messages"
+)
+async def get_project_messages(project_id: uuid.UUID, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Verify access
+    result = await db.execute(select(Project).where(Project.id == project_id, Project.user_id == current_user.id))
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    result = await db.execute(
+        select(Message)
+        .where(Message.project_id == project_id)
+        .order_by(Message.created_at.asc())
+    )
+    return result.scalars().all()
+
