@@ -42,6 +42,26 @@
             Client Connections
           </NuxtLink>
 
+          <!-- Time & Work Ledger -->
+          <NuxtLink
+            to="/time-tracking"
+            class="flex items-center gap-3.5 px-4.5 py-3 rounded-lg font-bold transition-all cursor-pointer border-none text-left text-gray-400 hover:text-white hover:bg-white/[0.01]"
+            active-class="bg-white/[0.05] !text-[#bef264] hover:!text-[#bef264]"
+          >
+            <span class="material-symbols-outlined text-md leading-none">timer</span>
+            Time & Work Ledger
+          </NuxtLink>
+
+          <!-- Forms & Questionnaires -->
+          <NuxtLink
+            to="/forms"
+            class="flex items-center gap-3.5 px-4.5 py-3 rounded-lg font-bold transition-all cursor-pointer border-none text-left text-gray-400 hover:text-white hover:bg-white/[0.01]"
+            active-class="bg-white/[0.05] !text-[#bef264] hover:!text-[#bef264]"
+          >
+            <span class="material-symbols-outlined text-md leading-none">dynamic_form</span>
+            Forms & Questionnaires
+          </NuxtLink>
+
           <!-- Invoices & Billing Account -->
           <NuxtLink
             to="/invoices"
