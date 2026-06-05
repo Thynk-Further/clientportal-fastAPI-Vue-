@@ -269,3 +269,55 @@ async def generate_form_presigned_url(
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"presigned_url": url, "object_key": object_key}
+
+from app.models.client_member import ClientMember
+from app.schemas.client import ClientMemberCreate, ClientMemberRead
+
+@router.get("/members", response_model=List[ClientMemberRead], summary="List team members")
+async def list_portal_members(session: ClientSession = Depends(get_current_client_session), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(ClientMember)
+        .where(ClientMember.client_id == session.client_id)
+        .order_by(ClientMember.created_at.asc())
+    )
+    return result.scalars().all()
+
+@router.post("/members", response_model=ClientMemberRead, summary="Invite a team member")
+async def create_portal_member(
+    payload: ClientMemberCreate,
+    session: ClientSession = Depends(get_current_client_session),
+    db: AsyncSession = Depends(get_db)
+):
+    # Only primary client can invite (not other members)
+    if session.client_member_id is not None:
+        raise HTTPException(status_code=403, detail="Only the primary client can manage team members.")
+        
+    # Check limit of 3
+    result = await db.execute(
+        select(ClientMember)
+        .where(ClientMember.client_id == session.client_id)
+    )
+    members = result.scalars().all()
+    if len(members) >= 3:
+        raise HTTPException(status_code=400, detail="Maximum of 3 team members reached.")
+        
+    # Check if email exists
+    for m in members:
+        if m.email.lower() == payload.email.lower():
+            raise HTTPException(status_code=400, detail="A member with this email already exists.")
+            
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    new_member = ClientMember(
+        id=uuid.uuid4(),
+        client_id=session.client_id,
+        name=payload.name,
+        email=payload.email,
+        member_token=uuid.uuid4(),
+        created_at=now
+    )
+    db.add(new_member)
+    await db.commit()
+    await db.refresh(new_member)
+    
+    # In a full production app, we would use Resend to email the unique `member_token` link here.
+    return new_member

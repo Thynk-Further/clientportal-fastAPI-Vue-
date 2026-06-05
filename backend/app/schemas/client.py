@@ -23,3 +23,17 @@ class ClientReadDetail(ClientReadList):
     portal_token: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
+
+class ClientMemberCreate(BaseModel):
+    name: str
+    email: EmailStr
+
+class ClientMemberRead(BaseModel):
+    id: uuid.UUID
+    client_id: uuid.UUID
+    name: str
+    email: EmailStr
+    member_token: uuid.UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
