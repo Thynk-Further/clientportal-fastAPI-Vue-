@@ -12,3 +12,4 @@ from app.models.form_template import FormTemplate
 from app.models.form_field import FormField
 from app.models.form_submission import FormSubmission
 from app.models.form_response import FormResponse
+from app.models.client_member import ClientMember
