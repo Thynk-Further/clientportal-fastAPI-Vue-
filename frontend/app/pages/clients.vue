@@ -65,16 +65,28 @@
         Querying Client Database: {{ filteredClients.length }} found
       </span>
 
-      <div class="relative w-full md:w-[320px]">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400/40 text-lg select-none">
-          search
-        </span>
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search by name, company or email..."
-          class="bg-[#1e2020] text-white rounded-lg pl-10 pr-4 py-2 w-full text-xs placeholder:text-gray-400/40 focus:outline-none focus:ring-1 focus:ring-[#bef264] transition-all"
-        />
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <!-- View Toggle -->
+        <div class="flex items-center bg-[#1e2020] rounded-lg p-1 border border-white/5 shrink-0">
+          <button @click="viewMode = 'grid'" :class="`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#2a2c2c] text-[#bef264]' : 'text-gray-500 hover:text-white'}`" title="Grid View">
+            <span class="material-symbols-outlined text-sm">grid_view</span>
+          </button>
+          <button @click="viewMode = 'list'" :class="`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-[#2a2c2c] text-[#bef264]' : 'text-gray-500 hover:text-white'}`" title="List View">
+            <span class="material-symbols-outlined text-sm">format_list_bulleted</span>
+          </button>
+        </div>
+
+        <div class="relative flex-1 md:w-[320px]">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400/40 text-lg select-none">
+            search
+          </span>
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Search by name, company or email..."
+            class="bg-[#1e2020] text-white rounded-lg pl-10 pr-4 py-2 w-full text-xs placeholder:text-gray-400/40 focus:outline-none focus:ring-1 focus:ring-[#bef264] transition-all"
+          />
+        </div>
       </div>
     </div>
 
@@ -95,7 +107,7 @@
         <p class="text-gray-400 font-mono text-xs">No client connections match your search query.</p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" v-else>
+      <div v-if="viewMode === 'grid'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div
           v-for="(client, index) in filteredClients"
           :key="client.id"
@@ -164,6 +176,62 @@
               {{ resendingId === client.id ? 'Sending...' : 'Resend Link' }}
             </button>
           </div>
+        </div>
+      </div>
+      
+      <!-- List View -->
+      <div v-else class="bg-[#171717] border border-white/[0.08] rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-white/[0.02] border-b border-white/[0.05] font-mono text-[10px] uppercase tracking-wider text-gray-400">
+              <tr>
+                <th class="px-6 py-4">Client Partner</th>
+                <th class="px-6 py-4">Contact Node</th>
+                <th class="px-6 py-4">Active Sprints</th>
+                <th class="px-6 py-4">Onboarding</th>
+                <th class="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/[0.05]">
+              <tr v-for="(client, index) in filteredClients" :key="client.id" class="hover:bg-white/[0.01] transition-colors group">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div :class="`w-8 h-8 rounded-full font-display font-semibold flex items-center justify-center text-xs shrink-0 ${
+                      index % 3 === 0
+                        ? 'bg-gradient-to-br from-[#bef264] to-[#a3d64c] text-neutral-900 font-extrabold' 
+                        : index % 3 === 1
+                        ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white' 
+                        : 'bg-gradient-to-br from-purple-400 to-purple-600 text-white'
+                    }`">
+                      {{ getInitials(client.name) }}
+                    </div>
+                    <div>
+                      <div class="font-bold text-white group-hover:text-[#bef264] transition-colors">{{ client.name }}</div>
+                      <div class="text-[10px] text-gray-400 font-mono uppercase">{{ client.company_name || 'Independent' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-gray-300 font-mono text-[11px]">{{ client.email }}</td>
+                <td class="px-6 py-4 text-[#bef264] font-semibold text-[11px] font-mono">
+                  {{ client.projectsCount || 0 }} {{ client.projectsCount === 1 ? 'Project' : 'Projects' }}
+                </td>
+                <td class="px-6 py-4 text-gray-400 font-mono text-[11px]">
+                  {{ new Date(client.created_at).toLocaleDateString() }}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button @click="copyPortalLink(client.id)" class="p-2 bg-[#212323] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] rounded-md transition-colors border border-white/5" title="Copy Link">
+                      <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                    </button>
+                    <button @click="resendMagicLink(client.id)" :disabled="resendingId === client.id" class="p-2 bg-[#212323] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] rounded-md transition-colors border border-white/5 disabled:opacity-50" title="Resend Link">
+                      <span v-if="resendingId === client.id" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                      <span v-else class="material-symbols-outlined text-[14px]">mark_email_unread</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </template>
@@ -257,6 +325,7 @@ const api = useApi()
 const clients = ref([])
 const isLoading = ref(true)
 const search = ref('')
+const viewMode = ref('grid') // 'grid' or 'list'
 const showAddModal = ref(false)
 const resendingId = ref(null)
 
@@ -279,9 +348,22 @@ const filteredClients = computed(() => {
 
 const fetchClients = async () => {
   try {
-    const data = await api('/api/v1/clients')
-    // Optionally fetch projects count for each client, but for now we just show 0 or mock
-    clients.value = data.map(c => ({...c, projectsCount: 0}))
+    const [clientsData, projectsData] = await Promise.all([
+      api('/api/v1/clients'),
+      api('/api/v1/projects')
+    ])
+    
+    const projectCounts = {}
+    if (projectsData) {
+      projectsData.forEach(p => {
+        projectCounts[p.client_id] = (projectCounts[p.client_id] || 0) + 1
+      })
+    }
+    
+    clients.value = clientsData.map(c => ({
+      ...c, 
+      projectsCount: projectCounts[c.id] || 0
+    }))
   } catch (err) {
     console.error('Failed to fetch clients', err)
   } finally {
