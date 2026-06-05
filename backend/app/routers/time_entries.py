@@ -6,7 +6,7 @@ from typing import List
 import uuid
 from datetime import datetime, timezone
 
-from app.database import get_db
+from app.dependencies.db import get_db
 from app.models.time_entry import TimeEntry
 from app.models.project import Project
 from app.schemas.time_entry import TimeEntryRead, TimeEntryCreate, TimeEntryManualCreate, TimeEntryUpdate

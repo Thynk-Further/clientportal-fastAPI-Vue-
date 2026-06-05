@@ -6,7 +6,7 @@
         Command Settings
       </h2>
       <p class="text-xs text-gray-400 mt-2">
-        Adjust portal profile settings, swap active roles, and edit metadata nodes on Obsidian commands.
+        Adjust portal profile settings, swap active roles, and edit metadata nodes on PortalX commands.
       </p>
     </div>
 
@@ -156,7 +156,7 @@ const handleSubmit = async () => {
 }
 
 const handleLogoutClick = () => {
-  if (confirm('Are you absolutely sure you want to sign out of Obsidian Flux?')) {
+  if (confirm('Are you absolutely sure you want to sign out of PortalX?')) {
     authStore.logout()
     router.push('/auth/login')
   }

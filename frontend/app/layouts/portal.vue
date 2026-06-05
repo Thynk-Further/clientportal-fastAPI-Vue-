@@ -11,7 +11,7 @@
             <div class="w-8 h-8 bg-[#bef264] rounded-lg flex items-center justify-center text-[#131f00] font-bold shadow-md">
               <span class="material-symbols-outlined text-lg leading-none">account_tree</span>
             </div>
-            <span class="font-display font-bold text-white text-xl tracking-tight">Obsidian Flux</span>
+            <span class="font-display font-bold text-white text-xl tracking-tight">PortalX</span>
           </div>
 
           <!-- Client Info -->
@@ -34,7 +34,7 @@
     <!-- Portal Footer -->
     <footer class="bg-[#121414] border-t border-white/5 py-6 mt-10 relative z-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center items-center">
-        <p class="text-xs text-gray-500 font-mono">Powered by Obsidian Flux Technologies</p>
+        <p class="text-xs text-gray-500 font-mono">Powered by PortalX Technologies</p>
       </div>
     </footer>
 

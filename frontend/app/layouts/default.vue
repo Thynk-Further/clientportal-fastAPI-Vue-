@@ -6,7 +6,7 @@
         <!-- Logo container -->
         <div class="px-6 flex items-center gap-2.5 font-display font-black text-lg tracking-tight text-white">
           <span class="material-symbols-outlined text-[#bef264] text-xl">account_tree</span>
-          Obsidian Flux
+          PortalX
         </div>
 
         <!-- Tab Navigation items -->
@@ -130,7 +130,7 @@
       <header class="md:hidden flex justify-between items-center px-6 h-16 bg-[#121414] border-b border-white/5 z-40 sticky top-0">
         <div class="font-display font-black text-lg text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-[#bef264] text-lg">account_tree</span>
-          Obsidian Flux
+          PortalX
         </div>
         <div class="flex items-center gap-1.5 font-mono text-xs">
           <button

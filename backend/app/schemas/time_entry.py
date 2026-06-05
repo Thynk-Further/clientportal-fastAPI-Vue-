@@ -4,7 +4,6 @@ from datetime import datetime
 import uuid
 
 class TimeEntryCreate(BaseModel):
-    project_id: uuid.UUID
     deliverable_id: Optional[uuid.UUID] = None
     description: Optional[str] = None
     started_at: Optional[datetime] = None  # If null, backend sets to now()
@@ -12,7 +11,6 @@ class TimeEntryCreate(BaseModel):
     hourly_rate_cents: Optional[int] = None
 
 class TimeEntryManualCreate(BaseModel):
-    project_id: uuid.UUID
     deliverable_id: Optional[uuid.UUID] = None
     description: Optional[str] = None
     started_at: datetime

@@ -57,7 +57,6 @@ class FormResponseRead(FormResponseBase):
 # --- Form Submissions ---
 class FormSubmissionBase(BaseModel):
     form_template_id: uuid.UUID
-    project_id: uuid.UUID
     title: str
 
 class FormSubmissionCreate(FormSubmissionBase):

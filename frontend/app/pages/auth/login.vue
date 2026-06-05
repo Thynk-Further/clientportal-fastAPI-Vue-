@@ -8,7 +8,7 @@
     <header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#121414] border-b border-white/[0.05]">
       <div class="font-display font-bold text-xl text-primary flex items-center gap-2">
         <span class="material-symbols-outlined text-[#bef264]">account_tree</span>
-        Obsidian Flux
+        PortalX
       </div>
       <div class="flex gap-2">
         <button class="material-symbols-outlined text-on-surface-variant hover:text-[#bef264] transition-colors cursor-pointer py-1 px-2 text-lg">
@@ -149,7 +149,7 @@
 
     <footer class="fixed bottom-0 w-full flex flex-col md:flex-row justify-between items-center px-6 py-4 bg-surface-container-lowest text-xs text-on-surface-variant border-t border-white/[0.05]">
       <div class="order-2 md:order-1 opacity-60">
-        © 2026 Obsidian Flux. All rights reserved.
+        © 2026 PortalX. All rights reserved.
       </div>
       <div class="flex gap-4 order-1 md:order-2 mb-2 md:mb-0">
         <a class="hover:text-[#bef264] transition-colors" href="#">Privacy Policy</a>

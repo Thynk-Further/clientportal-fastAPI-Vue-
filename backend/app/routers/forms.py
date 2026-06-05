@@ -7,7 +7,7 @@ from typing import List
 import uuid
 from datetime import datetime, timezone
 
-from app.database import get_db
+from app.dependencies.db import get_db
 from app.models.form_template import FormTemplate
 from app.models.form_field import FormField
 from app.models.form_submission import FormSubmission

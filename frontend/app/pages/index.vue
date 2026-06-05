@@ -296,7 +296,7 @@
           </div>
           <div>
             <label class="text-xs text-gray-400 block uppercase tracking-wider font-mono mb-1">Subject</label>
-            <input type="text" value="Obsidian Project Milestone Review" class="w-full bg-[#1e2020] text-white rounded-lg p-2.5 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none" />
+            <input type="text" value="PortalX Project Milestone Review" class="w-full bg-[#1e2020] text-white rounded-lg p-2.5 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none" />
           </div>
           <div>
             <label class="text-xs text-gray-400 block uppercase tracking-wider font-mono mb-1">Message Body</label>
