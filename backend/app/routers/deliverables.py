@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
 from typing import List
 import uuid
 
@@ -23,7 +24,12 @@ async def list_deliverables(project_id: uuid.UUID, db: AsyncSession = Depends(ge
     if not result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Project not found")
 
-    result = await db.execute(select(Deliverable).where(Deliverable.project_id == project_id).order_by(Deliverable.created_at.asc()))
+    result = await db.execute(
+        select(Deliverable)
+        .options(selectinload(Deliverable.file_uploads))
+        .where(Deliverable.project_id == project_id)
+        .order_by(Deliverable.created_at.asc())
+    )
     return result.scalars().all()
 
 @router.post(
@@ -61,6 +67,7 @@ async def create_deliverable(
 async def get_deliverable(deliverable_id: uuid.UUID, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     result = await db.execute(
         select(Deliverable)
+        .options(selectinload(Deliverable.file_uploads))
         .join(Project, Deliverable.project_id == Project.id)
         .where(Deliverable.id == deliverable_id, Project.user_id == current_user.id)
     )

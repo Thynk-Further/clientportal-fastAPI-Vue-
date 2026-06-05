@@ -121,6 +121,24 @@
               Open <ChevronRight class="w-4 h-4 ml-1" />
             </button>
           </div>
+
+          <!-- Uploaded Files List -->
+          <div v-if="deliverable.file_uploads && deliverable.file_uploads.length > 0" class="mt-4 pt-4 border-t border-gray-50 space-y-2">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Attached Files</h4>
+            <div v-for="file in deliverable.file_uploads" :key="file.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 group/file hover:bg-gray-100 transition-colors">
+              <div class="flex items-center gap-3">
+                <FileText class="w-4 h-4 text-indigo-500" />
+                <span class="text-sm font-medium text-gray-700">{{ file.file_name }}</span>
+                <span class="text-xs text-gray-400">({{ Math.round(file.file_size / 1024) }} KB)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Upload Component -->
+          <FileUpload 
+            :deliverable-id="deliverable.id" 
+            @upload-complete="(newFile) => { deliverable.file_uploads = deliverable.file_uploads || []; deliverable.file_uploads.push(newFile) }" 
+          />
         </div>
       </div>
 
@@ -141,9 +159,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { FolderKanban, Plus, FileBox, Clock, ChevronRight } from 'lucide-vue-next'
+import { FolderKanban, Plus, FileBox, Clock, ChevronRight, FileText } from 'lucide-vue-next'
 import { useApi } from '~/composables/useApi'
 import AddDeliverableModal from '~/components/AddDeliverableModal.vue'
+import FileUpload from '~/components/FileUpload.vue'
 
 const route = useRoute()
 const projectId = route.params.id
