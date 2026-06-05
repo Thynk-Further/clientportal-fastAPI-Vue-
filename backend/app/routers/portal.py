@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import List
 import datetime
 
@@ -76,6 +77,7 @@ async def list_portal_deliverables(project_id: uuid.UUID, session: ClientSession
         
     result = await db.execute(
         select(Deliverable)
+        .options(selectinload(Deliverable.file_uploads))
         .where(Deliverable.project_id == project_id)
         .order_by(Deliverable.created_at.asc())
     )

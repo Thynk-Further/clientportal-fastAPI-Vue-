@@ -67,8 +67,9 @@
       <!-- Deliverables List -->
       <div v-else class="space-y-4">
         <!-- Currently just divs, later they might be clickable if we want a separate view for each deliverable, or expanding accordions -->
-        <div v-for="deliverable in deliverables" :key="deliverable.id" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow group flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div class="flex items-start gap-4">
+        <div v-for="deliverable in deliverables" :key="deliverable.id" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow group">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div class="flex items-start gap-4">
             <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
               <FileBox class="w-6 h-6" />
             </div>
@@ -93,10 +94,25 @@
             </div>
           </div>
           
+          
           <!-- Actions (Placeholder for now) -->
           <button class="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors shrink-0">
-            View Files
+            Leave Feedback
           </button>
+          </div>
+
+          <!-- Uploaded Files List -->
+          <div v-if="deliverable.file_uploads && deliverable.file_uploads.length > 0" class="mt-4 pt-4 border-t border-gray-50 space-y-2">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Attached Files</h4>
+            <div v-for="file in deliverable.file_uploads" :key="file.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 group/file hover:bg-gray-100 transition-colors cursor-pointer">
+              <div class="flex items-center gap-3">
+                <FileText class="w-4 h-4 text-indigo-500" />
+                <span class="text-sm font-medium text-gray-700 group-hover/file:text-indigo-600 transition-colors">{{ file.file_name }}</span>
+                <span class="text-xs text-gray-400">({{ Math.round(file.file_size / 1024) }} KB)</span>
+              </div>
+              <button class="text-sm font-medium text-indigo-600 hover:text-indigo-700 opacity-0 group-hover/file:opacity-100 transition-opacity">Download</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -107,7 +123,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { ArrowLeft, FileBox, Clock } from 'lucide-vue-next'
+import { ArrowLeft, FileBox, Clock, FileText } from 'lucide-vue-next'
 import { useApi } from '~/composables/useApi'
 
 const route = useRoute()
