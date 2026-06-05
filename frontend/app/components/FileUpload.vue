@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-4 border border-dashed border-gray-300 rounded-xl p-6 bg-gray-50 text-center relative group hover:bg-gray-100 transition-colors">
+  <div class="mt-4 border border-dashed border-white/10 rounded-xl p-6 bg-layer-2 text-center relative group hover:bg-[#2e2e2e] transition-colors">
     <input 
       type="file" 
       @change="handleFileSelect" 
@@ -8,27 +8,27 @@
     />
     
     <div v-if="!isUploading" class="pointer-events-none">
-      <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3">
-        <UploadCloud class="w-6 h-6 text-indigo-600" />
+      <div class="w-12 h-12 bg-layer-1 border border-white/5 rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3">
+        <UploadCloud class="w-6 h-6 text-accent" />
       </div>
-      <p class="text-sm font-medium text-gray-900">Click to upload or drag and drop</p>
-      <p class="text-xs text-gray-500 mt-1">SVG, PNG, JPG, PDF, ZIP up to 50MB</p>
+      <p class="text-sm font-medium text-white font-heading">Click to upload or drag and drop</p>
+      <p class="text-xs text-gray-400 mt-1 font-mono">SVG, PNG, JPG, PDF, ZIP up to 50MB</p>
     </div>
 
     <!-- Uploading State -->
     <div v-else class="py-2">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium text-gray-900 truncate pr-4">{{ selectedFile?.name }}</span>
-        <span class="text-sm font-medium text-indigo-600">{{ uploadProgress }}%</span>
+        <span class="text-sm font-medium text-white truncate pr-4">{{ selectedFile?.name }}</span>
+        <span class="text-sm font-medium text-accent font-mono">{{ uploadProgress }}%</span>
       </div>
-      <div class="w-full bg-gray-200 rounded-full h-2">
-        <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" :style="{ width: `${uploadProgress}%` }"></div>
+      <div class="w-full bg-layer-1 rounded-full h-2">
+        <div class="bg-accent h-2 rounded-full transition-all duration-300" :style="{ width: `${uploadProgress}%` }"></div>
       </div>
-      <p class="text-xs text-gray-500 mt-3 text-left">Uploading to secure storage...</p>
+      <p class="text-xs text-gray-400 mt-3 text-left font-mono">Uploading to secure storage...</p>
     </div>
 
     <!-- Error State -->
-    <div v-if="error" class="absolute top-full left-0 right-0 mt-2 p-2 bg-red-50 text-red-700 text-xs rounded border border-red-100 z-20">
+    <div v-if="error" class="absolute top-full left-0 right-0 mt-2 p-2 bg-red-900/20 text-red-400 text-xs rounded border border-red-900/50 z-20">
       {{ error }}
     </div>
   </div>
