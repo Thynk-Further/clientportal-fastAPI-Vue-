@@ -62,12 +62,19 @@ class FormSubmissionBase(BaseModel):
 class FormSubmissionCreate(FormSubmissionBase):
     pass
 
+class ProjectReadBasic(BaseModel):
+    id: uuid.UUID
+    name: str
+    model_config = ConfigDict(from_attributes=True)
+
 class FormSubmissionRead(FormSubmissionBase):
     id: uuid.UUID
     client_id: uuid.UUID
+    project_id: uuid.UUID
     status: str # 'pending', 'partial', 'completed'
     submitted_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
     responses: List[FormResponseRead] = []
+    project: Optional[ProjectReadBasic] = None
     model_config = ConfigDict(from_attributes=True)

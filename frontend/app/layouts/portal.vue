@@ -10,7 +10,7 @@
             <span class="w-6 h-6 bg-[#bef264] rounded flex items-center justify-center text-[#131f00] shadow-sm">
               <span class="material-symbols-outlined text-sm leading-none">token</span>
             </span>
-            Flux
+            PortalX
           </div>
         </div>
 

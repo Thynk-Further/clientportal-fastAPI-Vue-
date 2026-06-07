@@ -17,7 +17,7 @@ router = APIRouter(tags=["websockets"])
 async def websocket_endpoint(
     websocket: WebSocket, 
     project_id: uuid.UUID, 
-    token: str = Query(...),
+    token: str = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     # Authenticate token
@@ -26,20 +26,25 @@ async def websocket_endpoint(
     sender_client_id = None
 
     # First check if it's a freelancer JWT
-    payload = decode_access_token(token)
-    if payload and "sub" in payload:
-        sender_type = "freelancer"
-        sender_user_id = uuid.UUID(payload["sub"])
-    else:
-        # Check if it's a client session token
-        result = await db.execute(select(ClientSession).where(ClientSession.session_token == token))
-        session = result.scalar_one_or_none()
-        if session and session.expires_at > datetime.datetime.utcnow():
-            sender_type = "client"
-            sender_client_id = session.client_id
-        else:
-            await websocket.close(code=1008, reason="Invalid or expired token")
-            return
+    if token:
+        payload = decode_access_token(token)
+        if payload and "sub" in payload:
+            sender_type = "freelancer"
+            sender_user_id = uuid.UUID(payload["sub"])
+    
+    if not sender_type:
+        # Check if it's a client session token via cookies
+        session_token = websocket.cookies.get("cp_session")
+        if session_token:
+            result = await db.execute(select(ClientSession).where(ClientSession.session_token == session_token))
+            session = result.scalar_one_or_none()
+            if session and session.expires_at > datetime.datetime.utcnow():
+                sender_type = "client"
+                sender_client_id = session.client_id
+                
+    if not sender_type:
+        await websocket.close(code=1008, reason="Invalid or expired token")
+        return
 
     # Verify project exists and user/client has access
     result = await db.execute(select(Project).where(Project.id == project_id))

@@ -31,6 +31,43 @@ async def get_current_client_session(request: Request, db: AsyncSession = Depend
         
     return client_session
 
+from app.models.client import Client
+from app.schemas.client import PortalMeResponse
+
+@router.get("/me", response_model=PortalMeResponse, summary="Get current client profile")
+async def get_portal_me(session: ClientSession = Depends(get_current_client_session), db: AsyncSession = Depends(get_db)):
+    if session.client_member_id:
+        result = await db.execute(select(ClientMember).where(ClientMember.id == session.client_member_id))
+        member = result.scalar_one_or_none()
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+        return {
+            "id": member.id,
+            "name": member.name,
+            "email": member.email,
+            "role": "member",
+            "onboarding_dismissed_at": session.onboarding_dismissed_at
+        }
+    else:
+        result = await db.execute(select(Client).where(Client.id == session.client_id))
+        client = result.scalar_one_or_none()
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        return {
+            "id": client.id,
+            "name": client.name,
+            "email": client.email,
+            "role": "primary",
+            "onboarding_dismissed_at": session.onboarding_dismissed_at
+        }
+
+@router.post("/onboarding/dismiss", summary="Dismiss client onboarding")
+async def dismiss_onboarding(session: ClientSession = Depends(get_current_client_session), db: AsyncSession = Depends(get_db)):
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    session.onboarding_dismissed_at = now
+    await db.commit()
+    return {"ok": True}
+
 @router.get(
     "/projects",
     response_model=List[ProjectRead],
@@ -80,6 +117,29 @@ async def list_portal_deliverables(project_id: uuid.UUID, session: ClientSession
         .options(selectinload(Deliverable.file_uploads))
         .where(Deliverable.project_id == project_id)
         .order_by(Deliverable.created_at.asc())
+    )
+    return result.scalars().all()
+
+from app.models.milestone import ProjectMilestone
+from app.schemas.milestone import MilestoneRead
+
+@router.get(
+    "/projects/{project_id}/milestones",
+    response_model=List[MilestoneRead],
+    summary="List milestones for a client project"
+)
+async def list_portal_milestones(project_id: uuid.UUID, session: ClientSession = Depends(get_current_client_session), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Project)
+        .where(Project.id == project_id, Project.client_id == session.client_id)
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    result = await db.execute(
+        select(ProjectMilestone)
+        .where(ProjectMilestone.project_id == project_id)
+        .order_by(ProjectMilestone.sort_order.asc(), ProjectMilestone.due_date.asc().nulls_last())
     )
     return result.scalars().all()
 
@@ -321,3 +381,28 @@ async def create_portal_member(
     
     # In a full production app, we would use Resend to email the unique `member_token` link here.
     return new_member
+
+@router.delete("/members/{member_id}", summary="Remove a team member")
+async def delete_portal_member(
+    member_id: uuid.UUID,
+    session: ClientSession = Depends(get_current_client_session),
+    db: AsyncSession = Depends(get_db)
+):
+    if session.client_member_id is not None:
+        raise HTTPException(status_code=403, detail="Only the primary client can manage team members.")
+        
+    result = await db.execute(
+        select(ClientMember).where(ClientMember.id == member_id, ClientMember.client_id == session.client_id)
+    )
+    member = result.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Team member not found.")
+        
+    await db.delete(member)
+    # Also invalidate their sessions
+    await db.execute(
+        ClientSession.__table__.delete().where(ClientSession.client_member_id == member_id)
+    )
+    await db.commit()
+    
+    return {"ok": True, "message": "Team member removed."}

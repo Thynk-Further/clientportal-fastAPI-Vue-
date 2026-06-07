@@ -37,3 +37,10 @@ class ClientMemberRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class PortalMeResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: EmailStr
+    role: str # "primary" or "member"
+    onboarding_dismissed_at: Optional[datetime] = None

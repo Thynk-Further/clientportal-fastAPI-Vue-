@@ -11,7 +11,7 @@
         Welcome to the <span class="text-[#bef264]">Command Center.</span>
       </h1>
       <p class="text-gray-400 max-w-2xl text-base pt-2">
-        We've configured your environment. Follow this guided walkthrough to synchronize your workflow with Obsidian Flux.
+        We've configured your environment. Follow this guided walkthrough to synchronize your workflow with PortalX.
       </p>
     </div>
 
@@ -35,7 +35,7 @@
         <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
           <p class="text-[10px] font-mono text-[#bef264] font-bold uppercase tracking-widest mb-1">Video Tutorial</p>
           <div class="flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white">Mastering the Obsidian Flux Portal</h3>
+            <h3 class="text-xl font-bold text-white">Mastering the PortalX Portal</h3>
             <span class="bg-black/60 px-2 py-1 rounded text-xs font-mono backdrop-blur-sm border border-white/10 text-white">12:45</span>
           </div>
         </div>
@@ -154,17 +154,69 @@
         <button class="flex-1 md:flex-none py-3 px-8 bg-[#bef264] hover:bg-[#a3d64c] text-[#131f00] rounded-lg font-bold transition-all whitespace-nowrap text-sm">
           Get Started
         </button>
-        <button class="flex-1 md:flex-none py-3 px-6 bg-[#1e2020] hover:bg-[#252828] text-white rounded-lg font-bold border border-white/5 transition-all whitespace-nowrap text-sm">
-          Mark as Complete
-        </button>
+          <button v-if="!isCompleted" @click="dismissOnboarding" class="flex-1 md:flex-none py-3 px-6 bg-[#1e2020] hover:bg-[#252828] text-white rounded-lg font-bold border border-white/5 transition-all whitespace-nowrap text-sm flex items-center justify-center gap-2">
+            <span v-if="isDismissing" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+            Mark as Complete
+          </button>
+          <span v-else class="text-[#bef264] flex items-center gap-2 font-bold font-mono uppercase tracking-widest text-xs">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            Completed
+          </span>
+        </div>
       </div>
-    </div>
 
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useApi } from '~/composables/useApi'
+
 definePageMeta({
   layout: 'portal'
 })
+
+const route = useRoute()
+const router = useRouter()
+const api = useApi()
+
+const me = ref(null)
+const projects = ref([])
+const isDismissing = ref(false)
+const isLoading = ref(true)
+
+const isCompleted = computed(() => !!me.value?.onboarding_dismissed_at)
+
+onMounted(async () => {
+  try {
+    const [meData, projectsData] = await Promise.all([
+      api('/api/v1/portal/me').catch(() => null),
+      api('/api/v1/portal/projects').catch(() => [])
+    ])
+    me.value = meData
+    projects.value = projectsData || []
+  } catch (error) {
+    console.error('Failed to load onboarding data', error)
+  } finally {
+    isLoading.value = false
+  }
+})
+
+const dismissOnboarding = async () => {
+  if (isDismissing.value) return
+  isDismissing.value = true
+  try {
+    await api('/api/v1/portal/onboarding/dismiss', { method: 'POST' })
+    if (me.value) {
+      me.value.onboarding_dismissed_at = new Date().toISOString()
+    }
+    // Automatically route to dashboard
+    router.push(`/portal/${route.params.token}`)
+  } catch (error) {
+    console.error('Failed to dismiss onboarding', error)
+  } finally {
+    isDismissing.value = false
+  }
+}
 </script>

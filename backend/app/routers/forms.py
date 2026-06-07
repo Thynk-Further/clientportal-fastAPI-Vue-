@@ -135,10 +135,27 @@ async def list_form_submissions(
         select(FormSubmission)
         .join(Project, Project.id == FormSubmission.project_id)
         .filter(Project.user_id == current_user.id)
-        .options(selectinload(FormSubmission.responses))
+        .options(selectinload(FormSubmission.responses), selectinload(FormSubmission.project))
         .order_by(desc(FormSubmission.created_at))
     )
     return result.scalars().all()
+
+@router.get("/form-submissions/{submission_id}", response_model=FormSubmissionRead)
+async def get_form_submission(
+    submission_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserRead = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(FormSubmission)
+        .join(Project, Project.id == FormSubmission.project_id)
+        .filter(FormSubmission.id == submission_id, Project.user_id == current_user.id)
+        .options(selectinload(FormSubmission.responses), selectinload(FormSubmission.project))
+    )
+    submission = result.scalars().first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="Form submission not found")
+    return submission
 
 @router.post("/projects/{project_id}/forms", response_model=FormSubmissionRead)
 async def assign_form_to_project(
