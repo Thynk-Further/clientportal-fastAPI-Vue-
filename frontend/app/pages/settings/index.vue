@@ -71,6 +71,24 @@
           </select>
         </div>
 
+        <!-- Notification Preferences Section -->
+        <div class="space-y-4 pt-4 border-t border-white/5">
+          <div>
+            <h3 class="font-bold text-white">Email Notifications</h3>
+            <p class="text-xs text-gray-400 mt-1">Choose which notifications you receive via email.</p>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="flex items-center justify-between" v-for="(label, key) in availablePrefs" :key="key">
+              <span class="text-sm text-gray-300">{{ label }}</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" :checked="getPref(key)" @change="togglePref(key)" class="sr-only peer" :disabled="saving">
+                <div class="w-9 h-5 bg-[#1e2020] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-400 peer-checked:after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#bef264]"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div class="flex justify-end gap-2 pt-4">
           <button
             type="submit"
@@ -118,7 +136,24 @@ const name = ref(authStore.user?.full_name || '')
 const email = ref(authStore.user?.email || '')
 const avatar = ref(authStore.user?.logo_url || '')
 const role = ref('Manager')
+const notificationPrefs = ref(authStore.user?.notification_email_prefs || {})
 const saving = ref(false)
+
+const availablePrefs = {
+  "deliverable_approved": "Deliverable Approved",
+  "change_requested": "Change Requested",
+  "form_submitted": "Form Submitted",
+  "message_received": "Message Received",
+  "invoice_paid": "Invoice Paid"
+}
+
+const getPref = (key) => {
+  return notificationPrefs.value[key] !== false
+}
+
+const togglePref = (key) => {
+  notificationPrefs.value[key] = !getPref(key)
+}
 
 const getInitials = (n) => {
   if (!n) return '?'
@@ -129,22 +164,20 @@ const handleSubmit = async () => {
   saving.value = true
 
   try {
-    // Attempt to update backend if endpoint exists. 
-    // Wait, let's assume /api/v1/auth/me or something similar. 
-    // We will just patch the authStore for now and pretend it's updated.
-    
-    // Example call:
-    // await api('/api/v1/users/me', {
-    //   method: 'PATCH',
-    //   body: { full_name: name.value, logo_url: avatar.value }
-    // })
-    
-    // Simulate API delay
-    await new Promise(r => setTimeout(r, 800))
+    // Update backend (simulated or real if the endpoint supports it)
+    await api('/api/v1/users/me', {
+      method: 'PATCH',
+      body: { 
+        full_name: name.value, 
+        logo_url: avatar.value,
+        notification_email_prefs: notificationPrefs.value
+      }
+    })
     
     // Update local store explicitly
     authStore.user.full_name = name.value
     authStore.user.logo_url = avatar.value
+    authStore.user.notification_email_prefs = notificationPrefs.value
     
     alert('Profile configurations updated successfully across high-performance nodes!')
   } catch (err) {
@@ -168,6 +201,7 @@ onMounted(() => {
     name.value = authStore.user.full_name || ''
     email.value = authStore.user.email || ''
     avatar.value = authStore.user.logo_url || ''
+    notificationPrefs.value = authStore.user.notification_email_prefs || {}
   }
 })
 </script>

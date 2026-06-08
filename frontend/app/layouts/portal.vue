@@ -97,21 +97,25 @@
             <input type="text" placeholder="Search workflow..." class="bg-transparent border-none text-xs text-white outline-none w-full ml-2 placeholder-gray-500" />
           </div>
 
-          <button class="text-gray-400 hover:text-white relative">
+          <button @click="isNotificationsOpen = true" class="text-gray-400 hover:text-white relative">
             <span class="material-symbols-outlined text-[20px]">notifications</span>
-            <span class="absolute top-0 right-0 w-1.5 h-1.5 bg-[#bef264] rounded-full"></span>
+            <span v-if="unreadCount > 0" class="absolute top-0 right-0 w-2.5 h-2.5 bg-[#bef264] rounded-full border-2 border-[#121414]"></span>
           </button>
           
-          <button class="text-gray-400 hover:text-white">
-            <span class="material-symbols-outlined text-[20px]">settings</span>
-          </button>
-
           <div class="h-8 w-8 rounded-full bg-gray-600 ml-2 overflow-hidden border border-white/10">
             <!-- Avatar Placeholder -->
             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar" class="w-full h-full object-cover opacity-80" />
           </div>
         </div>
       </header>
+
+      <!-- Notification Slide-over -->
+      <NotificationSlideover
+        :is-open="isNotificationsOpen"
+        :is-portal="true"
+        @close="isNotificationsOpen = false"
+        @update:unreadCount="count => unreadCount = count"
+      />
 
       <!-- Dynamic active views dispatcher -->
       <main class="flex-grow p-6 md:p-8 lg:p-10 pb-24 md:pb-12 relative z-10">
@@ -126,6 +130,19 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
 
 const route = useRoute()
+const isNotificationsOpen = ref(false)
+const unreadCount = ref(0)
+
+onMounted(async () => {
+  try {
+    const { $api } = useNuxtApp()
+    const res = await $api('/api/v1/portal/notifications?limit=1')
+    unreadCount.value = res.unread_count
+  } catch (err) {
+    console.error('Failed to fetch initial unread count', err)
+  }
+})
 </script>

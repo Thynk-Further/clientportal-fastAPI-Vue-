@@ -7,6 +7,15 @@ class ClientCreate(BaseModel):
     name: str
     email: EmailStr
     company_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+class ClientUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    company_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
 
 class ClientReadList(BaseModel):
     id: uuid.UUID
@@ -14,6 +23,10 @@ class ClientReadList(BaseModel):
     name: str
     email: EmailStr
     company_name: Optional[str]
+    avatar_url: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    notification_email_prefs: dict = {}
     created_at: datetime
     updated_at: datetime
 
@@ -43,4 +56,11 @@ class PortalMeResponse(BaseModel):
     name: str
     email: EmailStr
     role: str # "primary" or "member"
+    avatar_url: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    notification_email_prefs: dict = {}
     onboarding_dismissed_at: Optional[datetime] = None
+
+class NotificationPrefsUpdate(BaseModel):
+    prefs: dict

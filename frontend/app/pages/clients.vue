@@ -167,6 +167,13 @@
               Copy Link
             </button>
             <button
+              @click="openEditModal(client)"
+              class="flex-1 py-2 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-[#1e2020] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/5"
+            >
+              <span class="material-symbols-outlined text-[14px]">edit</span>
+              Edit
+            </button>
+            <button
               @click="resendMagicLink(client.id)"
               :disabled="resendingId === client.id"
               class="flex-1 py-2 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-[#1e2020] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/5 disabled:opacity-50"
@@ -220,6 +227,9 @@
                 </td>
                 <td class="px-6 py-4 text-right">
                   <div class="flex items-center justify-end gap-2">
+                    <button @click="openEditModal(client)" class="p-2 bg-[#212323] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] rounded-md transition-colors border border-white/5" title="Edit Client">
+                      <span class="material-symbols-outlined text-[14px]">edit</span>
+                    </button>
                     <button @click="copyPortalLink(client.id)" class="p-2 bg-[#212323] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] rounded-md transition-colors border border-white/5" title="Copy Link">
                       <span class="material-symbols-outlined text-[14px]">content_copy</span>
                     </button>
@@ -292,6 +302,28 @@
             />
           </div>
 
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Phone Number</label>
+            <input
+              v-model="phone"
+              type="text"
+              placeholder="e.g. +1 555-0100"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Address</label>
+            <input
+              v-model="address"
+              type="text"
+              placeholder="e.g. 123 Business Rd, Suite 100"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
           <div class="flex justify-end gap-2 text-sm pt-4">
             <button
               type="button"
@@ -313,6 +345,101 @@
         </form>
       </div>
     </div>
+
+    <!-- EDIT CLIENT DIALOG MODAL -->
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm">
+      <div class="bg-[#171717] border border-white/10 rounded-xl p-8 max-w-md w-full space-y-6">
+        <div class="flex justify-between items-start">
+          <h4 class="font-display text-xl font-bold text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#bef264]">edit</span>
+            Edit Client Profile
+          </h4>
+          <button
+            @click="closeEditModal"
+            class="material-symbols-outlined text-gray-400 hover:text-[#bef264] p-1 cursor-pointer transition-colors"
+          >
+            close
+          </button>
+        </div>
+
+        <form @submit.prevent="handleEditSubmit" class="space-y-4 font-sans text-sm">
+          <div v-if="submitError" class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
+            {{ submitError }}
+          </div>
+          
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Full Name</label>
+            <input
+              v-model="editName"
+              type="text"
+              required
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Company / Venture</label>
+            <input
+              v-model="editCompany"
+              type="text"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Email Node</label>
+            <input
+              v-model="editEmail"
+              type="email"
+              required
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Phone Number</label>
+            <input
+              v-model="editPhone"
+              type="text"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Address</label>
+            <input
+              v-model="editAddress"
+              type="text"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="flex justify-end gap-2 text-sm pt-4">
+            <button
+              type="button"
+              @click="closeEditModal"
+              :disabled="isSubmitting"
+              class="px-5 py-2.5 rounded-lg hover:bg-white/[0.05] transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="isSubmitting"
+              class="px-6 py-2.5 hover:bg-[#bef264]/80 bg-[#bef264] text-[#131f00] font-bold rounded-lg cursor-pointer transform active:scale-95 transition-all text-xs uppercase font-mono tracking-wider disabled:opacity-50 flex items-center gap-2"
+            >
+              <span v-if="isSubmitting" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -329,12 +456,25 @@ const viewMode = ref('grid') // 'grid' or 'list'
 const showAddModal = ref(false)
 const resendingId = ref(null)
 
+// Edit Modal
+const showEditModal = ref(false)
+const editingClient = ref(null)
+
 // Form states
 const name = ref('')
 const company = ref('')
 const email = ref('')
+const phone = ref('')
+const address = ref('')
 const isSubmitting = ref(false)
 const submitError = ref('')
+
+// Edit Form states
+const editName = ref('')
+const editCompany = ref('')
+const editEmail = ref('')
+const editPhone = ref('')
+const editAddress = ref('')
 
 const filteredClients = computed(() => {
   return clients.value.filter((client) => {
@@ -380,7 +520,9 @@ const handleSubmit = async () => {
       body: {
         name: name.value,
         company_name: company.value || null,
-        email: email.value
+        email: email.value,
+        phone: phone.value || null,
+        address: address.value || null
       }
     })
     
@@ -390,9 +532,55 @@ const handleSubmit = async () => {
     name.value = ''
     company.value = ''
     email.value = ''
+    phone.value = ''
+    address.value = ''
     showAddModal.value = false
   } catch (err) {
     submitError.value = err.message || 'Failed to add client.'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const openEditModal = (client) => {
+  editingClient.value = client
+  editName.value = client.name
+  editEmail.value = client.email
+  editCompany.value = client.company_name || ''
+  editPhone.value = client.phone || ''
+  editAddress.value = client.address || ''
+  submitError.value = ''
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  editingClient.value = null
+}
+
+const handleEditSubmit = async () => {
+  submitError.value = ''
+  isSubmitting.value = true
+  try {
+    const updatedClient = await api(`/api/v1/clients/${editingClient.value.id}`, {
+      method: 'PATCH',
+      body: {
+        name: editName.value,
+        email: editEmail.value,
+        company_name: editCompany.value || null,
+        phone: editPhone.value || null,
+        address: editAddress.value || null
+      }
+    })
+
+    const idx = clients.value.findIndex(c => c.id === updatedClient.id)
+    if (idx !== -1) {
+      clients.value[idx] = { ...clients.value[idx], ...updatedClient }
+    }
+
+    closeEditModal()
+  } catch (err) {
+    submitError.value = err.data?.detail || 'Failed to update client.'
   } finally {
     isSubmitting.value = false
   }
