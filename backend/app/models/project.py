@@ -32,3 +32,4 @@ class Project(Base):
     invoices = relationship("Invoice", back_populates="project")
     time_entries = relationship("TimeEntry", back_populates="project")
     form_submissions = relationship("FormSubmission", back_populates="project")
+    milestones = relationship("ProjectMilestone", back_populates="project")

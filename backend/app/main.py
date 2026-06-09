@@ -50,6 +50,13 @@ def create_app() -> FastAPI:
     app.include_router(deliverables.router, prefix="/api/v1")
     app.include_router(portal.router, prefix="/api/v1/portal")
     app.include_router(files.router, prefix="/api/v1/files")
+    
+    from app.routers import websockets, time_entries, forms, notifications, portal_notifications
+    app.include_router(websockets.router, prefix="/api/v1")
+    app.include_router(time_entries.router, prefix="/api/v1")
+    app.include_router(forms.router, prefix="/api/v1")
+    app.include_router(notifications.router, prefix="/api/v1/notifications")
+    app.include_router(portal_notifications.router, prefix="/api/v1/portal/notifications")
 
     return app
 

@@ -65,16 +65,28 @@
         Querying Client Database: {{ filteredClients.length }} found
       </span>
 
-      <div class="relative w-full md:w-[320px]">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400/40 text-lg select-none">
-          search
-        </span>
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search by name, company or email..."
-          class="bg-[#1e2020] text-white rounded-lg pl-10 pr-4 py-2 w-full text-xs placeholder:text-gray-400/40 focus:outline-none focus:ring-1 focus:ring-[#bef264] transition-all"
-        />
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <!-- View Toggle -->
+        <div class="flex items-center bg-[#1e2020] rounded-lg p-1 border border-white/5 shrink-0">
+          <button @click="viewMode = 'grid'" :class="`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#2a2c2c] text-[#bef264]' : 'text-gray-500 hover:text-white'}`" title="Grid View">
+            <span class="material-symbols-outlined text-sm">grid_view</span>
+          </button>
+          <button @click="viewMode = 'list'" :class="`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-[#2a2c2c] text-[#bef264]' : 'text-gray-500 hover:text-white'}`" title="List View">
+            <span class="material-symbols-outlined text-sm">format_list_bulleted</span>
+          </button>
+        </div>
+
+        <div class="relative flex-1 md:w-[320px]">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400/40 text-lg select-none">
+            search
+          </span>
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Search by name, company or email..."
+            class="bg-[#1e2020] text-white rounded-lg pl-10 pr-4 py-2 w-full text-xs placeholder:text-gray-400/40 focus:outline-none focus:ring-1 focus:ring-[#bef264] transition-all"
+          />
+        </div>
       </div>
     </div>
 
@@ -95,7 +107,7 @@
         <p class="text-gray-400 font-mono text-xs">No client connections match your search query.</p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" v-else>
+      <div v-if="viewMode === 'grid'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div
           v-for="(client, index) in filteredClients"
           :key="client.id"
@@ -155,6 +167,13 @@
               Copy Link
             </button>
             <button
+              @click="openEditModal(client)"
+              class="flex-1 py-2 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-[#1e2020] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/5"
+            >
+              <span class="material-symbols-outlined text-[14px]">edit</span>
+              Edit
+            </button>
+            <button
               @click="resendMagicLink(client.id)"
               :disabled="resendingId === client.id"
               class="flex-1 py-2 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-[#1e2020] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/5 disabled:opacity-50"
@@ -164,6 +183,65 @@
               {{ resendingId === client.id ? 'Sending...' : 'Resend Link' }}
             </button>
           </div>
+        </div>
+      </div>
+      
+      <!-- List View -->
+      <div v-else class="bg-[#171717] border border-white/[0.08] rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-white/[0.02] border-b border-white/[0.05] font-mono text-[10px] uppercase tracking-wider text-gray-400">
+              <tr>
+                <th class="px-6 py-4">Client Partner</th>
+                <th class="px-6 py-4">Contact Node</th>
+                <th class="px-6 py-4">Active Sprints</th>
+                <th class="px-6 py-4">Onboarding</th>
+                <th class="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/[0.05]">
+              <tr v-for="(client, index) in filteredClients" :key="client.id" class="hover:bg-white/[0.01] transition-colors group">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div :class="`w-8 h-8 rounded-full font-display font-semibold flex items-center justify-center text-xs shrink-0 ${
+                      index % 3 === 0
+                        ? 'bg-gradient-to-br from-[#bef264] to-[#a3d64c] text-neutral-900 font-extrabold' 
+                        : index % 3 === 1
+                        ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white' 
+                        : 'bg-gradient-to-br from-purple-400 to-purple-600 text-white'
+                    }`">
+                      {{ getInitials(client.name) }}
+                    </div>
+                    <div>
+                      <div class="font-bold text-white group-hover:text-[#bef264] transition-colors">{{ client.name }}</div>
+                      <div class="text-[10px] text-gray-400 font-mono uppercase">{{ client.company_name || 'Independent' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-gray-300 font-mono text-[11px]">{{ client.email }}</td>
+                <td class="px-6 py-4 text-[#bef264] font-semibold text-[11px] font-mono">
+                  {{ client.projectsCount || 0 }} {{ client.projectsCount === 1 ? 'Project' : 'Projects' }}
+                </td>
+                <td class="px-6 py-4 text-gray-400 font-mono text-[11px]">
+                  {{ new Date(client.created_at).toLocaleDateString() }}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button @click="openEditModal(client)" class="p-2 bg-[#212323] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] rounded-md transition-colors border border-white/5" title="Edit Client">
+                      <span class="material-symbols-outlined text-[14px]">edit</span>
+                    </button>
+                    <button @click="copyPortalLink(client.id)" class="p-2 bg-[#212323] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] rounded-md transition-colors border border-white/5" title="Copy Link">
+                      <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                    </button>
+                    <button @click="resendMagicLink(client.id)" :disabled="resendingId === client.id" class="p-2 bg-[#212323] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] rounded-md transition-colors border border-white/5 disabled:opacity-50" title="Resend Link">
+                      <span v-if="resendingId === client.id" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                      <span v-else class="material-symbols-outlined text-[14px]">mark_email_unread</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </template>
@@ -224,6 +302,28 @@
             />
           </div>
 
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Phone Number</label>
+            <input
+              v-model="phone"
+              type="text"
+              placeholder="e.g. +1 555-0100"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Address</label>
+            <input
+              v-model="address"
+              type="text"
+              placeholder="e.g. 123 Business Rd, Suite 100"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
           <div class="flex justify-end gap-2 text-sm pt-4">
             <button
               type="button"
@@ -245,6 +345,101 @@
         </form>
       </div>
     </div>
+
+    <!-- EDIT CLIENT DIALOG MODAL -->
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm">
+      <div class="bg-[#171717] border border-white/10 rounded-xl p-8 max-w-md w-full space-y-6">
+        <div class="flex justify-between items-start">
+          <h4 class="font-display text-xl font-bold text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#bef264]">edit</span>
+            Edit Client Profile
+          </h4>
+          <button
+            @click="closeEditModal"
+            class="material-symbols-outlined text-gray-400 hover:text-[#bef264] p-1 cursor-pointer transition-colors"
+          >
+            close
+          </button>
+        </div>
+
+        <form @submit.prevent="handleEditSubmit" class="space-y-4 font-sans text-sm">
+          <div v-if="submitError" class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
+            {{ submitError }}
+          </div>
+          
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Full Name</label>
+            <input
+              v-model="editName"
+              type="text"
+              required
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Company / Venture</label>
+            <input
+              v-model="editCompany"
+              type="text"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Email Node</label>
+            <input
+              v-model="editEmail"
+              type="email"
+              required
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Phone Number</label>
+            <input
+              v-model="editPhone"
+              type="text"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Address</label>
+            <input
+              v-model="editAddress"
+              type="text"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="flex justify-end gap-2 text-sm pt-4">
+            <button
+              type="button"
+              @click="closeEditModal"
+              :disabled="isSubmitting"
+              class="px-5 py-2.5 rounded-lg hover:bg-white/[0.05] transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="isSubmitting"
+              class="px-6 py-2.5 hover:bg-[#bef264]/80 bg-[#bef264] text-[#131f00] font-bold rounded-lg cursor-pointer transform active:scale-95 transition-all text-xs uppercase font-mono tracking-wider disabled:opacity-50 flex items-center gap-2"
+            >
+              <span v-if="isSubmitting" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -257,15 +452,29 @@ const api = useApi()
 const clients = ref([])
 const isLoading = ref(true)
 const search = ref('')
+const viewMode = ref('grid') // 'grid' or 'list'
 const showAddModal = ref(false)
 const resendingId = ref(null)
+
+// Edit Modal
+const showEditModal = ref(false)
+const editingClient = ref(null)
 
 // Form states
 const name = ref('')
 const company = ref('')
 const email = ref('')
+const phone = ref('')
+const address = ref('')
 const isSubmitting = ref(false)
 const submitError = ref('')
+
+// Edit Form states
+const editName = ref('')
+const editCompany = ref('')
+const editEmail = ref('')
+const editPhone = ref('')
+const editAddress = ref('')
 
 const filteredClients = computed(() => {
   return clients.value.filter((client) => {
@@ -279,9 +488,22 @@ const filteredClients = computed(() => {
 
 const fetchClients = async () => {
   try {
-    const data = await api('/api/v1/clients')
-    // Optionally fetch projects count for each client, but for now we just show 0 or mock
-    clients.value = data.map(c => ({...c, projectsCount: 0}))
+    const [clientsData, projectsData] = await Promise.all([
+      api('/api/v1/clients'),
+      api('/api/v1/projects')
+    ])
+    
+    const projectCounts = {}
+    if (projectsData) {
+      projectsData.forEach(p => {
+        projectCounts[p.client_id] = (projectCounts[p.client_id] || 0) + 1
+      })
+    }
+    
+    clients.value = clientsData.map(c => ({
+      ...c, 
+      projectsCount: projectCounts[c.id] || 0
+    }))
   } catch (err) {
     console.error('Failed to fetch clients', err)
   } finally {
@@ -298,7 +520,9 @@ const handleSubmit = async () => {
       body: {
         name: name.value,
         company_name: company.value || null,
-        email: email.value
+        email: email.value,
+        phone: phone.value || null,
+        address: address.value || null
       }
     })
     
@@ -308,9 +532,55 @@ const handleSubmit = async () => {
     name.value = ''
     company.value = ''
     email.value = ''
+    phone.value = ''
+    address.value = ''
     showAddModal.value = false
   } catch (err) {
     submitError.value = err.message || 'Failed to add client.'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const openEditModal = (client) => {
+  editingClient.value = client
+  editName.value = client.name
+  editEmail.value = client.email
+  editCompany.value = client.company_name || ''
+  editPhone.value = client.phone || ''
+  editAddress.value = client.address || ''
+  submitError.value = ''
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  editingClient.value = null
+}
+
+const handleEditSubmit = async () => {
+  submitError.value = ''
+  isSubmitting.value = true
+  try {
+    const updatedClient = await api(`/api/v1/clients/${editingClient.value.id}`, {
+      method: 'PATCH',
+      body: {
+        name: editName.value,
+        email: editEmail.value,
+        company_name: editCompany.value || null,
+        phone: editPhone.value || null,
+        address: editAddress.value || null
+      }
+    })
+
+    const idx = clients.value.findIndex(c => c.id === updatedClient.id)
+    if (idx !== -1) {
+      clients.value[idx] = { ...clients.value[idx], ...updatedClient }
+    }
+
+    closeEditModal()
+  } catch (err) {
+    submitError.value = err.data?.detail || 'Failed to update client.'
   } finally {
     isSubmitting.value = false
   }

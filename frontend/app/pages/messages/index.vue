@@ -46,11 +46,14 @@
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-baseline mb-0.5">
               <h4 :class="`font-bold text-sm truncate ${activeThreadId === th.id ? 'text-[#bef264]' : 'text-white group-hover:text-[#bef264] transition-colors'}`">
-                {{ th.name }}
+                {{ th.client ? th.client.name : 'Unknown Client' }}
               </h4>
               <span class="text-[10px] text-gray-500 font-mono shrink-0">{{ new Date(th.created_at).toLocaleDateString() }}</span>
             </div>
-            <p class="text-xs text-gray-400 truncate">{{ th.description || 'No recent messages' }}</p>
+            <p class="text-[10px] text-gray-400 font-mono uppercase tracking-wider truncate mb-0.5">
+              Project: {{ th.name }}
+            </p>
+            <p class="text-xs text-gray-500 truncate">{{ th.description || 'No recent messages' }}</p>
           </div>
         </div>
       </div>
@@ -70,7 +73,7 @@
             </div>
             <div class="min-w-0">
               <h3 class="font-display font-semibold text-white text-sm md:text-base leading-none truncate border-none">
-                {{ activeThread.name }}
+                {{ activeThread.client ? activeThread.client.name : 'Unknown Client' }} <span class="text-gray-500 text-sm font-normal">— {{ activeThread.name }}</span>
               </h3>
               <p class="text-[10px] font-mono text-gray-400 uppercase tracking-wider mt-1.5 flex items-center gap-1 leading-none">
                 <span class="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></span>
@@ -223,15 +226,37 @@ const activeThread = computed(() => {
   return threads.value.find((t) => t.id === activeThreadId.value)
 })
 
+const clients = ref([])
+
 const fetchThreads = async () => {
   try {
-    const data = await api('/api/v1/projects')
-    threads.value = data
-    if (data.length > 0 && !activeThreadId.value) {
-      selectThread(data[0].id)
+    // Fetch both projects and clients so we can map the client name to the project thread
+    const [projectsData, clientsData] = await Promise.all([
+      api('/api/v1/projects'),
+      api('/api/v1/clients')
+    ])
+    
+    // Create a dictionary for quick client lookups
+    const clientMap = {}
+    if (clientsData && clientsData.length) {
+      clientsData.forEach(c => {
+        clientMap[c.id] = c
+      })
+    }
+    
+    // Attach client details to each project thread
+    threads.value = (projectsData || []).map(p => {
+      return {
+        ...p,
+        client: clientMap[p.client_id] || null
+      }
+    })
+    
+    if (threads.value.length > 0 && !activeThreadId.value) {
+      selectThread(threads.value[0].id)
     }
   } catch (err) {
-    console.error('Failed to fetch projects as threads', err)
+    console.error('Failed to fetch projects and clients for threads', err)
   } finally {
     isLoading.value = false
   }
@@ -241,18 +266,51 @@ const selectThread = async (id) => {
   activeThreadId.value = id
   isLoadingMessages.value = true
   activeMessages.value = []
+  
+  // Close any existing connection
+  if (ws.value) {
+    ws.value.close()
+    ws.value = null
+  }
+  
   try {
-    // In actual implementation, we would connect via WebSocket here
-    // For now, we attempt to fetch messages via REST if an endpoint exists,
-    // or just mock it. Let's try the real endpoint (if it exists) or fallback.
     const data = await api(`/api/v1/projects/${id}/messages`)
     activeMessages.value = data || []
     scrollToBottom()
+    connectWebSocket(id)
   } catch (err) {
     console.error('Failed to fetch messages for project', err)
-    // If it fails, maybe the endpoint doesn't exist yet
   } finally {
     isLoadingMessages.value = false
+  }
+}
+
+let ws = ref(null)
+
+const connectWebSocket = (projectId) => {
+  const token = localStorage.getItem('access_token')
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  // Since we run FastAPI backend differently from frontend dev server, use the API baseURL
+  const wsUrl = `ws://localhost:8000/api/v1/ws/projects/${projectId}?token=${token}`
+  
+  ws.value = new WebSocket(wsUrl)
+  
+  ws.value.onopen = () => {
+    console.log('WebSocket connection established.')
+  }
+  
+  ws.value.onmessage = (event) => {
+    const data = JSON.parse(event.data)
+    activeMessages.value.push(data)
+    scrollToBottom()
+  }
+  
+  ws.value.onerror = (error) => {
+    console.error('WebSocket Error: ', error)
+  }
+  
+  ws.value.onclose = () => {
+    console.log('WebSocket connection closed.')
   }
 }
 
@@ -266,42 +324,17 @@ const scrollToBottom = () => {
 
 const handleSend = async () => {
   if (!inputMessage.value.trim() && !attachmentFile.value) return
-  if (!activeThreadId.value) return
+  if (!activeThreadId.value || !ws.value || ws.value.readyState !== WebSocket.OPEN) return
 
   isSending.value = true
   try {
-    // In full implementation, this should go through WebSockets or REST
-    // Since we don't have full WebSocket set up yet, we'll try a REST fallback
-    // Or just manually add it to the active messages list to simulate sending
-    const msg = {
-      id: Date.now().toString(),
-      project_id: activeThreadId.value,
-      sender_type: 'freelancer',
-      content: inputMessage.value,
-      created_at: new Date().toISOString()
-    }
-    
-    // Simulate API call delay
-    await new Promise(r => setTimeout(r, 500))
-    activeMessages.value.push(msg)
+    // Send message via WebSocket
+    ws.value.send(inputMessage.value)
     
     inputMessage.value = ''
     attachmentName.value = ''
     attachmentFile.value = null
     scrollToBottom()
-    
-    // Simulate a reply
-    setTimeout(() => {
-      activeMessages.value.push({
-        id: (Date.now() + 1).toString(),
-        project_id: activeThreadId.value,
-        sender_type: 'client',
-        content: 'Acknowledged! We have received your update. Processing immediately.',
-        created_at: new Date().toISOString()
-      })
-      scrollToBottom()
-    }, 1500)
-    
   } catch (err) {
     console.error('Failed to send message', err)
     alert('Failed to send message')
