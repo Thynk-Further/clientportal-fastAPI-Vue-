@@ -166,20 +166,32 @@ async def logout(response: Response, current_user: User = Depends(get_current_us
     }
 )
 async def validate_portal_token(request: PortalValidateRequest, response: Response, db: AsyncSession = Depends(get_db)):
+    # Check if primary client token
     result = await db.execute(select(Client).where(Client.portal_token == request.portal_token))
     client = result.scalar_one_or_none()
     
+    client_member = None
     if not client:
-        raise HTTPException(
-            status_code=404,
-            detail={"detail": "Invalid or expired portal token", "code": "INVALID_PORTAL_TOKEN"}
-        )
+        # Check if team member token
+        from app.models.client_member import ClientMember
+        member_result = await db.execute(select(ClientMember).where(ClientMember.member_token == request.portal_token))
+        client_member = member_result.scalar_one_or_none()
+        
+        if not client_member:
+            raise HTTPException(
+                status_code=404,
+                detail={"detail": "Invalid or expired portal token", "code": "INVALID_PORTAL_TOKEN"}
+            )
+        client_id = client_member.client_id
+    else:
+        client_id = client.id
         
     session_token = str(uuid.uuid4())
     expires = dt.datetime.utcnow() + dt.timedelta(days=7)
     
     client_session = ClientSession(
-        client_id=client.id,
+        client_id=client_id,
+        client_member_id=client_member.id if client_member else None,
         session_token=session_token,
         expires_at=expires
     )

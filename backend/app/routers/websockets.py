@@ -10,14 +10,39 @@ from app.services.auth_service import decode_access_token
 from app.models.client_session import ClientSession
 from app.models.message import Message
 from app.models.project import Project
+from app.services.notifications_service import create_notification
 
 router = APIRouter(tags=["websockets"])
+
+@router.websocket("/ws/user")
+async def user_websocket_endpoint(
+    websocket: WebSocket,
+    token: str = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    sender_user_id = None
+    if token:
+        payload = decode_access_token(token)
+        if payload and "sub" in payload:
+            sender_user_id = uuid.UUID(payload["sub"])
+            
+    if not sender_user_id:
+        await websocket.close(code=1008, reason="Invalid or expired token")
+        return
+        
+    await manager.connect_user(websocket, str(sender_user_id))
+    try:
+        while True:
+            # We just keep connection alive, maybe receive pings
+            data = await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect_user(websocket, str(sender_user_id))
 
 @router.websocket("/ws/projects/{project_id}")
 async def websocket_endpoint(
     websocket: WebSocket, 
     project_id: uuid.UUID, 
-    token: str = Query(...),
+    token: str = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     # Authenticate token
@@ -26,20 +51,25 @@ async def websocket_endpoint(
     sender_client_id = None
 
     # First check if it's a freelancer JWT
-    payload = decode_access_token(token)
-    if payload and "sub" in payload:
-        sender_type = "freelancer"
-        sender_user_id = uuid.UUID(payload["sub"])
-    else:
-        # Check if it's a client session token
-        result = await db.execute(select(ClientSession).where(ClientSession.session_token == token))
-        session = result.scalar_one_or_none()
-        if session and session.expires_at > datetime.datetime.utcnow():
-            sender_type = "client"
-            sender_client_id = session.client_id
-        else:
-            await websocket.close(code=1008, reason="Invalid or expired token")
-            return
+    if token:
+        payload = decode_access_token(token)
+        if payload and "sub" in payload:
+            sender_type = "freelancer"
+            sender_user_id = uuid.UUID(payload["sub"])
+    
+    if not sender_type:
+        # Check if it's a client session token via cookies
+        session_token = websocket.cookies.get("cp_session")
+        if session_token:
+            result = await db.execute(select(ClientSession).where(ClientSession.session_token == session_token))
+            session = result.scalar_one_or_none()
+            if session and session.expires_at > datetime.datetime.utcnow():
+                sender_type = "client"
+                sender_client_id = session.client_id
+                
+    if not sender_type:
+        await websocket.close(code=1008, reason="Invalid or expired token")
+        return
 
     # Verify project exists and user/client has access
     result = await db.execute(select(Project).where(Project.id == project_id))
@@ -87,6 +117,36 @@ async def websocket_endpoint(
                 "created_at": new_msg.created_at.isoformat()
             }
             await manager.broadcast_to_project(project_str, message_data)
+
+            # Trigger Notification
+            if sender_type == "freelancer":
+                # freelancer sent message, notify client
+                await create_notification(
+                    db=db,
+                    recipient_type="client",
+                    recipient_id=project.client_id,
+                    notification_type="message_received",
+                    entity_type="message",
+                    entity_id=new_msg.id,
+                    title="New Message",
+                    message=f"You received a new message in project {project.name}.",
+                    link_url=f"/portal/{project.id}",
+                    project_id=project.id
+                )
+            else:
+                # client sent message, notify freelancer
+                await create_notification(
+                    db=db,
+                    recipient_type="user",
+                    recipient_id=project.user_id,
+                    notification_type="message_received",
+                    entity_type="message",
+                    entity_id=new_msg.id,
+                    title="New Message from Client",
+                    message=f"You received a new message in project {project.name}.",
+                    link_url=f"/dashboard/projects/{project.id}",
+                    project_id=project.id
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(websocket, project_str)

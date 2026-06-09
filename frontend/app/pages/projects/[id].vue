@@ -33,17 +33,20 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs (Only Deliverables is active for now) -->
+      <!-- Navigation Tabs -->
       <div class="mt-8 border-b border-white/5">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-          <button class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium border-accent text-accent font-mono">
+          <button 
+            @click="activeTab = 'milestones'"
+            class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium font-mono transition-colors"
+            :class="activeTab === 'milestones' ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:border-gray-400 hover:text-gray-300'">
+            Milestones
+          </button>
+          <button 
+            @click="activeTab = 'deliverables'"
+            class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium font-mono transition-colors"
+            :class="activeTab === 'deliverables' ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:border-gray-400 hover:text-gray-300'">
             Deliverables
-          </button>
-          <button class="whitespace-nowrap border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:border-gray-400 hover:text-gray-300 cursor-not-allowed opacity-50 font-mono" title="Coming soon">
-            Invoices
-          </button>
-          <button class="whitespace-nowrap border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:border-gray-400 hover:text-gray-300 cursor-not-allowed opacity-50 font-mono" title="Coming soon">
-            Time Tracking
           </button>
         </nav>
       </div>
@@ -57,8 +60,62 @@
       </NuxtLink>
     </div>
 
+    <!-- Milestones Content -->
+    <div v-if="project && activeTab === 'milestones'" class="space-y-6 animate-in fade-in duration-300">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white font-heading">Project Milestones</h2>
+        <button @click="isMilestoneModalOpen = true" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-layer-0 bg-accent rounded-lg hover:bg-[#a4d64c] transition-colors">
+          <Plus class="w-4 h-4 mr-1.5" />
+          Add Milestone
+        </button>
+      </div>
+
+      <!-- Loading Milestones -->
+      <div v-if="isLoadingMilestones" class="space-y-4">
+        <div v-for="i in 3" :key="i" class="bg-layer-1 rounded-2xl border border-white/5 p-5 h-20 animate-pulse"></div>
+      </div>
+
+      <!-- Empty Milestones -->
+      <div v-else-if="milestones.length === 0" class="bg-layer-1 rounded-3xl border border-dashed border-white/10 p-12 text-center">
+        <div class="w-16 h-16 bg-layer-2 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-gray-500 text-3xl">event_note</span>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2 font-heading">No milestones scheduled</h3>
+        <p class="text-gray-400 max-w-sm mx-auto mb-6">Create milestones to give your client a clear timeline and track project progress.</p>
+        <button @click="isMilestoneModalOpen = true" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-layer-0 bg-accent rounded-lg hover:bg-[#a4d64c] transition-colors">
+          <Plus class="w-4 h-4 mr-2" />
+          Add Milestone
+        </button>
+      </div>
+
+      <!-- Milestones List -->
+      <div v-else class="space-y-4">
+        <div v-for="milestone in milestones" :key="milestone.id" class="bg-layer-1 rounded-2xl border border-white/5 p-6 hover:bg-layer-2 transition-colors flex items-center justify-between gap-4 group">
+          <div class="flex items-center gap-4">
+            <button @click="toggleMilestoneStatus(milestone)" class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
+                 :class="milestone.status === 'completed' ? 'border-green-500 bg-green-500 text-white' : 'border-gray-500 text-transparent hover:border-accent'">
+              <span class="material-symbols-outlined text-sm font-bold" v-if="milestone.status === 'completed'">check</span>
+            </button>
+            <div>
+              <h3 class="font-bold text-white text-lg font-heading" :class="{'line-through text-gray-500': milestone.status === 'completed'}">{{ milestone.title }}</h3>
+              <p class="text-sm text-gray-400 mt-1" v-if="milestone.description">{{ milestone.description }}</p>
+              <div class="text-xs font-mono text-gray-500 mt-2" v-if="milestone.due_date">Due: {{ new Date(milestone.due_date).toLocaleDateString() }}</div>
+            </div>
+          </div>
+          
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+            <button @click="deleteMilestone(milestone.id)" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+              <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Deliverables Content -->
-    <div v-if="project" class="space-y-6">
+    <div v-if="project && activeTab === 'deliverables'" class="space-y-6 animate-in fade-in duration-300">
       
       <!-- Deliverables Header -->
       <div class="flex items-center justify-between">
@@ -144,13 +201,21 @@
 
     </div>
 
-    <!-- The Add Deliverable Modal Component -->
+    <!-- Modals -->
     <AddDeliverableModal 
       v-if="project"
       :is-open="isModalOpen" 
       :project-id="project.id" 
       @close="isModalOpen = false" 
       @deliverable-added="handleDeliverableAdded" 
+    />
+
+    <AddMilestoneModal
+      v-if="project"
+      :is-open="isMilestoneModalOpen"
+      :project-id="project.id"
+      @close="isMilestoneModalOpen = false"
+      @milestone-added="handleMilestoneAdded"
     />
     
   </div>
@@ -162,6 +227,7 @@ import { useRoute } from 'vue-router'
 import { FolderKanban, Plus, FileBox, Clock, ChevronRight, FileText } from 'lucide-vue-next'
 import { useApi } from '~/composables/useApi'
 import AddDeliverableModal from '~/components/AddDeliverableModal.vue'
+import AddMilestoneModal from '~/components/AddMilestoneModal.vue'
 import FileUpload from '~/components/FileUpload.vue'
 
 const route = useRoute()
@@ -173,10 +239,16 @@ const project = ref(null)
 const isLoadingProject = ref(true)
 const error = ref(null)
 
+const activeTab = ref('milestones')
+
 const deliverables = ref([])
 const isLoadingDeliverables = ref(true)
 
+const milestones = ref([])
+const isLoadingMilestones = ref(true)
+
 const isModalOpen = ref(false)
+const isMilestoneModalOpen = ref(false)
 
 const fetchProjectData = async () => {
   try {
@@ -185,18 +257,58 @@ const fetchProjectData = async () => {
     
     // Fetch deliverables
     deliverables.value = await api(`/api/v1/projects/${projectId}/deliverables`)
+
+    // Fetch milestones
+    milestones.value = await api(`/api/v1/projects/${projectId}/milestones`)
+
   } catch (err) {
     console.error('Failed to fetch project details', err)
     error.value = 'Could not load project. It may have been deleted or you do not have access.'
   } finally {
     isLoadingProject.value = false
     isLoadingDeliverables.value = false
+    isLoadingMilestones.value = false
   }
 }
 
 const handleDeliverableAdded = (newDeliverable) => {
-  // Push the new deliverable into the list
   deliverables.value.push(newDeliverable)
+}
+
+const handleMilestoneAdded = (newMilestone) => {
+  milestones.value.push(newMilestone)
+}
+
+const toggleMilestoneStatus = async (milestone) => {
+  const originalStatus = milestone.status
+  const newStatus = originalStatus === 'pending' ? 'completed' : 'pending'
+  
+  // Optimistic update
+  milestone.status = newStatus
+
+  try {
+    await api(`/api/v1/projects/${projectId}/milestones/${milestone.id}`, {
+      method: 'PATCH',
+      body: { status: newStatus }
+    })
+  } catch (err) {
+    console.error('Failed to update milestone status', err)
+    milestone.status = originalStatus // Revert on failure
+  }
+}
+
+const deleteMilestone = async (milestoneId) => {
+  if (!confirm('Are you sure you want to delete this milestone?')) return
+  
+  try {
+    await api(`/api/v1/projects/${projectId}/milestones/${milestoneId}`, {
+      method: 'DELETE'
+    })
+    milestones.value = milestones.value.filter(m => m.id !== milestoneId)
+  } catch (err) {
+    console.error('Failed to delete milestone', err)
+    alert('Failed to delete milestone')
+  }
 }
 
 onMounted(() => {

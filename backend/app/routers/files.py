@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import boto3
@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.deliverable import Deliverable
 from app.models.project import Project
 from app.models.file_upload import FileUpload
+from app.services.notifications_service import create_notification
 
 router = APIRouter(tags=["files"])
 
@@ -71,15 +72,23 @@ async def generate_presigned_url(request: PresignedUrlRequest, db: AsyncSession 
     summary="Confirm file upload",
     description="Saves the file metadata to the database after successful R2 upload."
 )
-async def confirm_file_upload(request: FileUploadConfirm, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def confirm_file_upload(
+    request: FileUploadConfirm,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     # Verify access to deliverable again
     result = await db.execute(
-        select(Deliverable)
+        select(Deliverable, Project.client_id, Deliverable.name)
         .join(Project, Deliverable.project_id == Project.id)
         .where(Deliverable.id == request.deliverable_id, Project.user_id == current_user.id)
     )
-    if not result.scalar_one_or_none():
+    row = result.first()
+    if not row:
         raise HTTPException(status_code=404, detail="Deliverable not found or access denied")
+        
+    deliverable, client_id, deliverable_name = row
 
     file_upload = FileUpload(
         deliverable_id=request.deliverable_id,
@@ -93,5 +102,20 @@ async def confirm_file_upload(request: FileUploadConfirm, db: AsyncSession = Dep
     db.add(file_upload)
     await db.commit()
     await db.refresh(file_upload)
+
+    if client_id:
+        await create_notification(
+            db=db,
+            background_tasks=background_tasks,
+            recipient_type="client",
+            recipient_id=client_id,
+            notification_type="deliverable_uploaded",
+            entity_type="deliverable",
+            entity_id=deliverable.id,
+            title="New File Uploaded",
+            message=f"{current_user.full_name} uploaded a new file to {deliverable_name}",
+            link_url=f"/portal/{deliverable.project_id}",
+            project_id=deliverable.project_id
+        )
 
     return file_upload
