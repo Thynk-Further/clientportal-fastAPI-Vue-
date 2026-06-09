@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import String, Integer, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Uuid as UUID
+from sqlalchemy import Uuid as UUID, JSON as JSONB
 from app.database import Base
 
 class User(Base):
@@ -18,6 +18,7 @@ class User(Base):
     subscription_tier: Mapped[str] = mapped_column(String, nullable=False, default="free")
     stripe_customer_id: Mapped[str | None] = mapped_column(String, nullable=True)
     default_hourly_rate_cents: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    notification_email_prefs: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

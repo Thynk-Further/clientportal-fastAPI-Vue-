@@ -6,7 +6,7 @@ import uuid
 
 from app.dependencies.db import get_db
 from app.dependencies.auth import get_current_user
-from app.schemas.client import ClientCreate, ClientReadList, ClientReadDetail
+from app.schemas.client import ClientCreate, ClientReadList, ClientReadDetail, ClientUpdate
 from app.models.user import User
 from app.models.client import Client
 from app.models.client_session import ClientSession
@@ -46,7 +46,9 @@ async def create_client(
         user_id=current_user.id,
         name=client_data.name,
         email=client_data.email,
-        company_name=client_data.company_name
+        company_name=client_data.company_name,
+        phone=client_data.phone,
+        address=client_data.address
     )
     db.add(client)
     await db.commit()
@@ -68,6 +70,42 @@ async def get_client(client_id: uuid.UUID, db: AsyncSession = Depends(get_db), c
     client = result.scalar_one_or_none()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
+    return client
+
+@router.patch(
+    "/{client_id}",
+    response_model=ClientReadDetail,
+    summary="Update a client"
+)
+async def update_client(
+    client_id: uuid.UUID,
+    client_data: ClientUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(Client).where(Client.id == client_id, Client.user_id == current_user.id))
+    client = result.scalar_one_or_none()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    if client_data.name is not None:
+        client.name = client_data.name
+    if client_data.email is not None:
+        # Check if new email is taken
+        if client_data.email != client.email:
+            existing = await db.execute(select(Client).where(Client.user_id == current_user.id, Client.email == client_data.email))
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail="Client with this email already exists")
+        client.email = client_data.email
+    if client_data.company_name is not None:
+        client.company_name = client_data.company_name
+    if client_data.phone is not None:
+        client.phone = client_data.phone
+    if client_data.address is not None:
+        client.address = client_data.address
+
+    await db.commit()
+    await db.refresh(client)
     return client
 
 @router.post(

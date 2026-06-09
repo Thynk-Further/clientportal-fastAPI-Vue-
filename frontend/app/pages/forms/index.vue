@@ -120,8 +120,8 @@
                 <div class="text-[10px] text-gray-500 font-mono mt-0.5">Assigned: {{ new Date(sub.created_at).toLocaleDateString() }}</div>
               </td>
               <td class="px-5 py-4">
-                <div class="text-xs text-gray-300 font-mono">Project ID:</div>
-                <div class="text-[10px] text-gray-500 font-mono truncate max-w-[150px]">{{ sub.project_id }}</div>
+                <div class="text-xs text-gray-300 font-mono">Project:</div>
+                <div class="text-[10px] text-gray-500 font-mono truncate max-w-[150px]">{{ sub.project?.name || sub.project_id }}</div>
               </td>
               <td class="px-5 py-4 text-center">
                 <span :class="`px-2 py-1 rounded text-[9px] font-bold border uppercase tracking-wider ${
@@ -137,6 +137,7 @@
               </td>
               <td class="px-5 py-4 text-right">
                 <button
+                  @click="$router.push(`/forms/submissions/${sub.id}`)"
                   class="px-3 py-1.5 bg-[#1e2020] hover:bg-[#bef264] hover:text-[#131f00] text-gray-300 text-[10px] font-bold font-mono rounded border border-white/5 transition-colors cursor-pointer uppercase"
                 >
                   View

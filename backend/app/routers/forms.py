@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -18,6 +18,8 @@ from app.schemas.form import (
     FormSubmissionRead, FormSubmissionCreate
 )
 from app.routers.auth import get_current_user
+from app.schemas.user import UserRead
+from app.services.notifications_service import create_notification
 from app.schemas.user import UserRead
 
 router = APIRouter(tags=["Forms"])
@@ -135,15 +137,33 @@ async def list_form_submissions(
         select(FormSubmission)
         .join(Project, Project.id == FormSubmission.project_id)
         .filter(Project.user_id == current_user.id)
-        .options(selectinload(FormSubmission.responses))
+        .options(selectinload(FormSubmission.responses), selectinload(FormSubmission.project))
         .order_by(desc(FormSubmission.created_at))
     )
     return result.scalars().all()
+
+@router.get("/form-submissions/{submission_id}", response_model=FormSubmissionRead)
+async def get_form_submission(
+    submission_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserRead = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(FormSubmission)
+        .join(Project, Project.id == FormSubmission.project_id)
+        .filter(FormSubmission.id == submission_id, Project.user_id == current_user.id)
+        .options(selectinload(FormSubmission.responses), selectinload(FormSubmission.project))
+    )
+    submission = result.scalars().first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="Form submission not found")
+    return submission
 
 @router.post("/projects/{project_id}/forms", response_model=FormSubmissionRead)
 async def assign_form_to_project(
     project_id: uuid.UUID,
     sub_in: FormSubmissionCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: UserRead = Depends(get_current_user)
 ):
@@ -173,10 +193,27 @@ async def assign_form_to_project(
     
     db.add(db_submission)
     await db.commit()
-    await db.refresh(db_submission)
     
-    db_submission.responses = []
+    # Reload with relationships to satisfy FormSubmissionRead
+    result = await db.execute(
+        select(FormSubmission)
+        .filter(FormSubmission.id == db_submission.id)
+        .options(selectinload(FormSubmission.responses), selectinload(FormSubmission.project))
+    )
+    submission_out = result.scalars().first()
     
-    # TODO: In a full production app, dispatch Resend email here: "You have a new form to complete in the portal!"
+    await create_notification(
+        db=db,
+        recipient_type="client",
+        recipient_id=project.client_id,
+        notification_type="form_assigned",
+        entity_type="form_submission",
+        entity_id=db_submission.id,
+        title="New Form Assigned",
+        message=f"{current_user.full_name} assigned a new form: {sub_in.title}",
+        link_url=f"/forms/{db_submission.id}",
+        project_id=project_id,
+        background_tasks=background_tasks
+    )
     
-    return db_submission
+    return submission_out

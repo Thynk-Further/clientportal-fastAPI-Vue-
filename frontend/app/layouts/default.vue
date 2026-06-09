@@ -85,6 +85,20 @@
             <!-- <span class="h-2 w-2 rounded-full bg-[#bef264] animate-pulse"></span> -->
           </NuxtLink>
 
+          <!-- Notifications -->
+          <button
+            @click="isNotificationsOpen = true"
+            class="flex items-center justify-between w-full px-4.5 py-3 rounded-lg font-bold transition-all cursor-pointer border-none text-left text-gray-400 hover:text-white hover:bg-white/[0.01]"
+          >
+            <div class="flex items-center gap-3.5">
+              <span class="material-symbols-outlined text-md leading-none">notifications</span>
+              Notifications
+            </div>
+            <span v-if="unreadCount > 0" class="bg-[#bef264] text-[#131f00] text-[10px] px-1.5 py-0.5 rounded-full font-black">
+              {{ unreadCount }}
+            </span>
+          </button>
+
           <!-- Command Settings -->
           <NuxtLink
             to="/settings"
@@ -132,7 +146,11 @@
           <span class="material-symbols-outlined text-[#bef264] text-lg">account_tree</span>
           PortalX
         </div>
-        <div class="flex items-center gap-1.5 font-mono text-xs">
+        <div class="flex items-center gap-4 font-mono text-xs">
+          <button @click="isNotificationsOpen = true" class="text-gray-400 hover:text-white relative mt-1">
+            <span class="material-symbols-outlined text-[20px]">notifications</span>
+            <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#bef264] rounded-full border-2 border-[#121414]"></span>
+          </button>
           <button
             @click="handleLogout"
             class="px-2.5 py-1 text-[10px] uppercase font-bold border border-white/10 rounded bg-[#1e2020] text-gray-400 hover:text-red-400"
@@ -141,6 +159,14 @@
           </button>
         </div>
       </header>
+
+      <!-- Notification Slide-over -->
+      <NotificationSlideover
+        :is-open="isNotificationsOpen"
+        :is-portal="false"
+        @close="isNotificationsOpen = false"
+        @update:unreadCount="count => unreadCount = count"
+      />
 
       <!-- Dynamic active views dispatcher -->
       <main class="flex-grow p-6 md:p-8 lg:p-10 pb-24 md:pb-12">
@@ -151,14 +177,29 @@
 </template>
 
 <script setup>
-import { useRouter } from '#app'
+import { useRouter, useNuxtApp } from '#app'
 import { useAuthStore } from '~/stores/auth'
+import { ref, onMounted } from 'vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const isNotificationsOpen = ref(false)
+const unreadCount = ref(0)
 
 const handleLogout = () => {
   authStore.logout()
   router.push('/auth/login')
 }
+
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    try {
+      const { $api } = useNuxtApp()
+      const res = await $api('/api/v1/notifications?limit=1')
+      unreadCount.value = res.unread_count
+    } catch (err) {
+      console.error('Failed to fetch initial unread count', err)
+    }
+  }
+})
 </script>
