@@ -271,7 +271,7 @@ from app.config import settings
 async def list_portal_forms(session: ClientSession = Depends(get_current_client_session), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(FormSubmission)
-        .options(selectinload(FormSubmission.responses))
+        .options(selectinload(FormSubmission.responses), selectinload(FormSubmission.project))
         .where(FormSubmission.client_id == session.client_id)
         .order_by(FormSubmission.created_at.desc())
     )
