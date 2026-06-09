@@ -1,3 +1,19 @@
+<img width="1806" height="929" alt="Screenshot 2026-06-09 110655" src="https://github.com/user-attachments/assets/c9c01646-0c17-4d41-95c4-f4801a41bd5f" />
+<img width="1775" height="928" alt="Screenshot 2026-06-09 110628" src="https://github.com/user-attachments/assets/afce07b3-b006-4df0-af76-f15c1e0b9cae" />
+<img width="1802" height="927" alt="Screenshot 2026-06-09 110554" src="https://github.com/user-attachments/assets/a83c2d6e-8ede-4dab-86c9-7e6ee0169dd5" />
+<img width="1798" height="933" alt="Screenshot 2026-06-09 110530" src="https://github.com/user-attachments/assets/3f0c782a-2485-47f9-8b5f-75960659b615" />
+<img width="1792" height="945" alt="Screenshot 2026-06-09 110401" src="https://github.com/user-attachments/assets/5f91f2db-cbd2-4199-9e77-a195d063a631" />
+<img width="1782" height="895" alt="Screenshot 2026-06-09 103358" src="https://github.com/user-attachments/assets/35b87689-0caa-4818-8152-d70f63931205" />
+<img width="1812" height="929" alt="Screenshot 2026-06-09 103331" src="https://github.com/user-attachments/assets/3cba816a-708c-4e8c-ad74-1ec62cfd2da0" />
+<img width="1821" height="923" alt="Screenshot 2026-06-09 103249" src="https://github.com/user-attachments/assets/3c0eb9a4-c331-4a35-a464-487d7a90fe35" />
+<img width="1784" height="946" alt="Screenshot 2026-06-09 103227" src="https://github.com/user-attachments/assets/ec5b9333-1e6b-457b-a094-78381a26381b" />
+<img width="1806" height="928" alt="Screenshot 2026-06-09 103201" src="https://github.com/user-attachments/assets/33ba52be-b9dd-46a0-9ded-f67fc4fc1fde" />
+<img width="1813" height="927" alt="Screenshot 2026-06-09 101843" src="https://github.com/user-attachments/assets/dc69bc51-a303-4def-9da2-9111d8eaec9f" />
+<img width="1805" height="922" alt="Screenshot 2026-06-09 101825" src="https://github.com/user-attachments/assets/35b82630-9177-414c-9352-42340822e8c4" />
+<img width="1790" height="915" alt="Screenshot 2026-06-09 101803" src="https://github.com/user-attachments/assets/a38cb047-3fed-4c48-bfb4-f8fee5e48e65" />
+<img width="1809" height="941" alt="Screenshot 2026-06-09 101735" src="https://github.com/user-attachments/assets/45a24e7d-6a4e-472f-aa3e-903c84e41497" />
+<img width="1910" height="979" alt="Screenshot 2026-06-09 101659" src="https://github.com/user-attachments/assets/cb9b2075-6f42-4e4e-8801-ed314fc6cdbc" />
+<img width="1784" height="901" alt="Screenshot 2026-06-09 101535" src="https://github.com/user-attachments/assets/432b7f7b-3a47-40ed-9892-8f152c7692ea" />
 # ClientPortal
 
 ClientPortal is a highly focused, purpose-built client portal for freelancers. It provides an all-in-one space to share deliverables, collect timestamped approvals, track time, host project discussions, manage forms/questionnaires, and get paid—without the setup overhead of heavy, all-in-one tools like Dubsado or HoneyBook.
