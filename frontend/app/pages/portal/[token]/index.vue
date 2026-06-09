@@ -31,8 +31,7 @@
 
       <!-- Projects Grid -->
       <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- We use standard div instead of NuxtLink for now, until we build the client project detail view -->
-        <div v-for="project in projects" :key="project.id" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow group relative cursor-pointer flex flex-col">
+        <NuxtLink v-for="project in projects" :key="project.id" :to="`/portal/${route.params.token}/projects/${project.id}`" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow group relative cursor-pointer flex flex-col block">
           <div class="flex justify-between items-start mb-4">
             <div>
               <h3 class="font-bold text-gray-900 text-xl group-hover:text-indigo-600 transition-colors">{{ project.name }}</h3>
@@ -55,7 +54,7 @@
               View Project <ChevronRight class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
             </span>
           </div>
-        </div>
+        </NuxtLink>
       </div>
     </div>
     
@@ -64,9 +63,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { FolderKanban, ChevronRight } from 'lucide-vue-next'
 import { useApi } from '~/composables/useApi'
 
+const route = useRoute()
 const api = useApi()
 
 const projects = ref([])
