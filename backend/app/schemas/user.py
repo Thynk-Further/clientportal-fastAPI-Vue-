@@ -11,6 +11,7 @@ class UserRead(BaseModel):
     brand_secondary_color: Optional[str]
     subscription_tier: str
     default_hourly_rate_cents: Optional[int]
+    notification_email_prefs: dict = {}
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -34,6 +35,7 @@ class UserUpdate(BaseModel):
     brand_primary_color: Optional[str] = Field(None, pattern=r"^#(?:[0-9a-fA-F]{3}){1,2}$")
     brand_secondary_color: Optional[str] = Field(None, pattern=r"^#(?:[0-9a-fA-F]{3}){1,2}$")
     default_hourly_rate_cents: Optional[int] = None
+    notification_email_prefs: Optional[dict] = None
 
     model_config = ConfigDict(
         json_schema_extra={

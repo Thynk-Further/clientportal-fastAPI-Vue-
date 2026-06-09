@@ -112,3 +112,111 @@ async def get_project_messages(project_id: uuid.UUID, db: AsyncSession = Depends
     )
     return result.scalars().all()
 
+from app.models.milestone import ProjectMilestone
+from app.schemas.milestone import MilestoneCreate, MilestoneUpdate, MilestoneRead
+from datetime import datetime, timezone
+
+@router.get(
+    "/{project_id}/milestones",
+    response_model=List[MilestoneRead],
+    summary="Get project milestones"
+)
+async def get_project_milestones(project_id: uuid.UUID, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = await db.execute(select(Project).where(Project.id == project_id, Project.user_id == current_user.id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    result = await db.execute(
+        select(ProjectMilestone)
+        .where(ProjectMilestone.project_id == project_id)
+        .order_by(ProjectMilestone.sort_order.asc(), ProjectMilestone.due_date.asc().nulls_last())
+    )
+    return result.scalars().all()
+
+@router.post(
+    "/{project_id}/milestones",
+    response_model=MilestoneRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create milestone"
+)
+async def create_project_milestone(
+    project_id: uuid.UUID,
+    milestone_data: MilestoneCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(Project).where(Project.id == project_id, Project.user_id == current_user.id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    milestone = ProjectMilestone(
+        id=uuid.uuid4(),
+        project_id=project_id,
+        title=milestone_data.title,
+        description=milestone_data.description,
+        status=milestone_data.status,
+        due_date=milestone_data.due_date.replace(tzinfo=None) if milestone_data.due_date else None,
+        sort_order=milestone_data.sort_order,
+        created_at=now,
+        updated_at=now
+    )
+    db.add(milestone)
+    await db.commit()
+    await db.refresh(milestone)
+    return milestone
+
+@router.patch(
+    "/{project_id}/milestones/{milestone_id}",
+    response_model=MilestoneRead,
+    summary="Update milestone"
+)
+async def update_project_milestone(
+    project_id: uuid.UUID,
+    milestone_id: uuid.UUID,
+    update_data: MilestoneUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(Project).where(Project.id == project_id, Project.user_id == current_user.id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    result = await db.execute(select(ProjectMilestone).where(ProjectMilestone.id == milestone_id, ProjectMilestone.project_id == project_id))
+    milestone = result.scalar_one_or_none()
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        if key == 'due_date' and value is not None:
+            value = value.replace(tzinfo=None)
+        setattr(milestone, key, value)
+
+    milestone.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    await db.commit()
+    await db.refresh(milestone)
+    return milestone
+
+@router.delete(
+    "/{project_id}/milestones/{milestone_id}",
+    summary="Delete milestone"
+)
+async def delete_project_milestone(
+    project_id: uuid.UUID,
+    milestone_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(Project).where(Project.id == project_id, Project.user_id == current_user.id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    result = await db.execute(select(ProjectMilestone).where(ProjectMilestone.id == milestone_id, ProjectMilestone.project_id == project_id))
+    milestone = result.scalar_one_or_none()
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+
+    await db.delete(milestone)
+    await db.commit()
+    return {"ok": True}

@@ -32,6 +32,16 @@
           <input v-model="form.company_name" type="text" class="w-full px-3 py-2 bg-layer-2 border border-white/10 text-white rounded-lg shadow-sm focus:ring-accent focus:border-accent sm:text-sm placeholder-gray-500" placeholder="Acme Corp" />
         </div>
 
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1">Phone Number <span class="text-gray-500 font-normal">(Optional)</span></label>
+          <input v-model="form.phone" type="text" class="w-full px-3 py-2 bg-layer-2 border border-white/10 text-white rounded-lg shadow-sm focus:ring-accent focus:border-accent sm:text-sm placeholder-gray-500" placeholder="+1 (555) 000-0000" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1">Address <span class="text-gray-500 font-normal">(Optional)</span></label>
+          <input v-model="form.address" type="text" class="w-full px-3 py-2 bg-layer-2 border border-white/10 text-white rounded-lg shadow-sm focus:ring-accent focus:border-accent sm:text-sm placeholder-gray-500" placeholder="123 Main St, City, Country" />
+        </div>
+
         <div class="mt-6 flex gap-3 justify-end">
           <button type="button" @click="close" class="px-4 py-2 text-sm font-medium text-gray-300 bg-layer-2 border border-white/10 rounded-lg hover:bg-[#2e2e2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent">
             Cancel
@@ -64,14 +74,16 @@ const api = useApi()
 const form = ref({
   name: '',
   email: '',
-  company_name: ''
+  company_name: '',
+  phone: '',
+  address: ''
 })
 const isLoading = ref(false)
 const error = ref(null)
 
 const close = () => {
   error.value = null
-  form.value = { name: '', email: '', company_name: '' }
+  form.value = { name: '', email: '', company_name: '', phone: '', address: '' }
   emit('close')
 }
 
@@ -85,7 +97,9 @@ const handleSubmit = async () => {
       body: {
         name: form.value.name,
         email: form.value.email,
-        company_name: form.value.company_name || null // Convert empty string to null
+        company_name: form.value.company_name || null,
+        phone: form.value.phone || null,
+        address: form.value.address || null
       }
     })
     
