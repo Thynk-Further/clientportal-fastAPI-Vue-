@@ -16,6 +16,7 @@ export const useApi = () => {
   // Create a custom fetch instance with default options
   const customFetch = $fetch.create({
     baseURL: config.public.apiBaseUrl as string,
+    credentials: 'include', // Ensures HTTPOnly cookies (like cp_session or cp_refresh) are sent with every request
     
     // onRequest runs right BEFORE the request is sent to the backend
     onRequest({ request, options }) {
@@ -36,6 +37,13 @@ export const useApi = () => {
     onResponseError({ request, response, options }) {
       // If we get a 401, it means our token is expired or invalid.
       if (response.status === 401 && import.meta.client) {
+        
+        // If we are in the client portal, DO NOT redirect to the freelancer login.
+        // The portal components handle 401s themselves (e.g., showing an "Expired Link" message).
+        if (window.location.pathname.startsWith('/portal')) {
+          return
+        }
+
         // Clear the bad token from local storage
         localStorage.removeItem('access_token')
         
