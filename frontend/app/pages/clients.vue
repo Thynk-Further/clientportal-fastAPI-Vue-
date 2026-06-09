@@ -1,118 +1,287 @@
 <template>
-  <div class="max-w-6xl mx-auto space-y-6">
-    
-    <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="space-y-8 font-sans max-w-7xl mx-auto text-[#e3e2e2]">
+    <!-- Header with quick stats -->
+    <section class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Clients</h1>
-        <p class="mt-1 text-sm text-gray-500">Manage your clients and their portal access.</p>
+        <h2 class="font-display text-3xl font-bold text-white tracking-tight md:text-4xl">
+          Workspace: Clients
+        </h2>
+        <p class="text-xs text-gray-400 mt-2">
+          Manage corporate client accounts, explore billing configurations, and log onboarding times.
+        </p>
       </div>
-      <button @click="isModalOpen = true" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shrink-0">
-        <Plus class="w-5 h-5 mr-1.5" />
-        Add Client
-      </button>
+      <div class="flex gap-2">
+        <button
+          @click="showAddModal = true"
+          class="bg-[#bef264] text-[#131f00] hover:bg-[#bef264]/80 font-bold px-5 py-3 rounded-lg text-sm transition-all duration-100 cursor-pointer active:scale-95 flex items-center justify-center gap-2 font-mono uppercase tracking-wider"
+        >
+          <span class="material-symbols-outlined text-md">person_add</span>
+          Add Client
+        </button>
+      </div>
+    </section>
+
+    <!-- Corporate Grid Statistics -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-[#171717] border border-white/[0.08] p-5 rounded-xl flex items-center gap-4">
+        <div class="bg-[#bef264]/10 text-[#bef264] p-3 rounded-xl shrink-0">
+          <span class="material-symbols-outlined text-xl leading-none">handshake</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">Connected Partners</span>
+          <span class="text-2xl font-bold text-white leading-none mt-1 block">{{ clients.length }} Active</span>
+        </div>
+      </div>
+
+      <div class="bg-[#171717] border border-white/[0.08] p-5 rounded-xl flex items-center gap-4">
+        <div class="bg-[#bef264]/10 text-[#bef264] p-3 rounded-xl shrink-0">
+          <span class="material-symbols-outlined text-xl leading-none">grade</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">Avg Customer Rating</span>
+          <span class="text-2xl font-bold text-white leading-none mt-1 block">4.9 ★★★★★</span>
+        </div>
+      </div>
+
+      <div class="bg-[#171717] border border-white/[0.08] p-5 rounded-xl flex items-center gap-4">
+        <div class="bg-[#bef264]/10 text-[#bef264] p-3 rounded-xl shrink-0">
+          <span class="material-symbols-outlined text-xl leading-none">visibility</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">Manager Workspace Link</span>
+          <button
+            @click="toggleRole"
+            class="text-[#bef264] hover:underline text-xs font-bold font-mono mt-1 uppercase text-left tracking-wide block"
+          >
+            Simulate Client View →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filtering row -->
+    <div class="py-2 border-y border-white/[0.05] bg-surface-container-lowest/20 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <span class="font-mono text-xs uppercase text-gray-400 tracking-wider">
+        Querying Client Database: {{ filteredClients.length }} found
+      </span>
+
+      <div class="relative w-full md:w-[320px]">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400/40 text-lg select-none">
+          search
+        </span>
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search by name, company or email..."
+          class="bg-[#1e2020] text-white rounded-lg pl-10 pr-4 py-2 w-full text-xs placeholder:text-gray-400/40 focus:outline-none focus:ring-1 focus:ring-[#bef264] transition-all"
+        />
+      </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="i in 3" :key="i" class="bg-white rounded-2xl border border-gray-100 p-6 h-32 animate-pulse">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-12 h-12 bg-gray-200 rounded-full"></div>
-          <div class="space-y-2 flex-1">
-            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div class="h-3 bg-gray-100 rounded w-3/4"></div>
+      <div v-for="i in 3" :key="i" class="bg-[#171717] border border-white/[0.08] rounded-xl overflow-hidden flex flex-col h-48 animate-pulse">
+        <div class="h-2 bg-gradient-to-r from-gray-700 to-transparent"></div>
+        <div class="p-6 flex-1 space-y-6"></div>
+      </div>
+    </div>
+
+    <template v-else>
+      <!-- Grid of clients -->
+      <div v-if="filteredClients.length === 0" class="text-center py-20 bg-[#171717] border border-white/[0.08] rounded-xl">
+        <span class="material-symbols-outlined text-4xl text-gray-400/40 mb-3 animate-pulse">
+          groups
+        </span>
+        <p class="text-gray-400 font-mono text-xs">No client connections match your search query.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" v-else>
+        <div
+          v-for="(client, index) in filteredClients"
+          :key="client.id"
+          class="bg-[#171717] border border-white/[0.08] rounded-xl overflow-hidden flex flex-col hover:border-[#bef264]/20 transition-all duration-200 group"
+        >
+          <!-- Visual Header Grid Accent -->
+          <div class="h-1 bg-gradient-to-r from-[#bef264]/20 to-transparent"></div>
+
+          <div class="p-6 flex-1 space-y-6">
+            <!-- Persona Bio -->
+            <div class="flex items-center gap-4">
+              <div :class="`w-10 h-10 rounded-full font-display font-semibold flex items-center justify-center text-sm shrink-0 ${
+                index % 3 === 0
+                  ? 'bg-gradient-to-br from-[#bef264] to-[#a3d64c] text-neutral-900 font-extrabold' 
+                  : index % 3 === 1
+                  ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white' 
+                  : 'bg-gradient-to-br from-purple-400 to-purple-600 text-white'
+              }`">
+                {{ getInitials(client.name) }}
+              </div>
+              <div class="min-w-0 font-sans">
+                <h4 class="font-bold text-white group-hover:text-[#bef264] transition-colors truncate">
+                  {{ client.name }}
+                </h4>
+                <p class="text-[10px] text-gray-400 font-mono uppercase tracking-wider truncate">
+                  {{ client.company_name || 'Independent' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Operational Metrics -->
+            <div class="space-y-3.5 bg-white/[0.01] p-4 rounded-lg border border-white/[0.03] text-xs font-mono">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400 uppercase tracking-wider text-[10px]">Onboarding:</span>
+                <span class="text-white font-medium text-[11px]">{{ new Date(client.created_at).toLocaleDateString() }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400 uppercase tracking-wider text-[10px]">Active Sprints:</span>
+                <span class="text-[#bef264] font-semibold text-[11px]">
+                  {{ client.projectsCount || 0 }} {{ client.projectsCount === 1 ? 'Project' : 'Projects' }}
+                </span>
+              </div>
+              <div class="flex flex-col gap-1 pt-2 border-t border-white/5">
+                <span class="text-gray-400 uppercase tracking-wider block text-[10px]">Contact Node:</span>
+                <span class="text-white truncate select-all text-[11px]">{{ client.email }}</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Empty State -->
-    <div v-else-if="clients.length === 0" class="bg-white rounded-3xl border border-dashed border-gray-300 p-12 text-center">
-      <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Users class="w-8 h-8 text-indigo-600" />
-      </div>
-      <h3 class="text-lg font-bold text-gray-900 mb-2">No clients found</h3>
-      <p class="text-gray-500 max-w-sm mx-auto mb-6">You haven't added any clients yet. Add your first client to start collaborating.</p>
-      <button @click="isModalOpen = true" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-        <Plus class="w-4 h-4 mr-2" />
-        Add Client
-      </button>
-    </div>
-
-    <!-- Clients Grid -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="client in clients" :key="client.id" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all relative group">
-        
-        <!-- Options Dropdown using a simple relative div on hover (for MVP simplicity) -->
-        <div class="absolute top-4 right-4 z-10">
-          <div class="relative inline-block text-left group/dropdown">
-            <button type="button" class="flex items-center text-gray-400 hover:text-gray-600 focus:outline-none" aria-haspopup="true">
-              <MoreVertical class="w-5 h-5" />
+          <!-- Simulation Action Bottom Bar -->
+          <div class="border-t border-white/5 px-6 py-4 bg-[#1e2020]/30 flex items-center gap-3">
+            <button
+              @click="copyPortalLink(client.id)"
+              class="flex-1 py-2 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-[#1e2020] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/5"
+            >
+              <span class="material-symbols-outlined text-[14px]">content_copy</span>
+              Copy Link
             </button>
-            <div class="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 invisible opacity-0 group-hover/dropdown:visible group-hover/dropdown:opacity-100 transition-all focus:outline-none">
-              <div class="py-1">
-                <button @click="copyPortalLink(client.id)" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left">
-                  <Copy class="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-                  Copy Portal Link
-                </button>
-              </div>
-              <div class="py-1">
-                <button @click="resendMagicLink(client.id)" :disabled="resendingId === client.id" class="group flex items-center px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 w-full text-left disabled:opacity-50">
-                  <RefreshCw v-if="resendingId === client.id" class="mr-3 h-4 w-4 text-indigo-400 animate-spin" />
-                  <Mail v-else class="mr-3 h-4 w-4 text-indigo-400 group-hover:text-indigo-500" />
-                  {{ resendingId === client.id ? 'Sending...' : 'Resend Magic Link' }}
-                </button>
-              </div>
-            </div>
+            <button
+              @click="resendMagicLink(client.id)"
+              :disabled="resendingId === client.id"
+              class="flex-1 py-2 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider bg-[#1e2020] hover:bg-[#bef264] hover:text-[#131f00] text-gray-400 hover:border-[#bef264] transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/5 disabled:opacity-50"
+            >
+              <span v-if="resendingId === client.id" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+              <span v-else class="material-symbols-outlined text-[14px]">mark_email_unread</span>
+              {{ resendingId === client.id ? 'Sending...' : 'Resend Link' }}
+            </button>
           </div>
-        </div>
-
-        <div class="flex items-start gap-4">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shrink-0 border border-indigo-50">
-            <span class="text-indigo-700 font-bold text-lg">{{ client.name.charAt(0).toUpperCase() }}</span>
-          </div>
-          <div class="flex-1 min-w-0 pr-8">
-            <h3 class="text-lg font-bold text-gray-900 truncate">{{ client.name }}</h3>
-            <p v-if="client.company_name" class="text-sm font-medium text-indigo-600 truncate mb-1">{{ client.company_name }}</p>
-            <div class="flex items-center text-sm text-gray-500">
-              <Mail class="w-3.5 h-3.5 mr-1.5 shrink-0" />
-              <span class="truncate">{{ client.email }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
-          <span class="text-xs text-gray-400 font-medium">Added {{ new Date(client.created_at).toLocaleDateString() }}</span>
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-            Active
-          </span>
         </div>
       </div>
-    </div>
+    </template>
 
-    <!-- The Add Client Modal Component -->
-    <AddClientModal :is-open="isModalOpen" @close="isModalOpen = false" @client-added="handleClientAdded" />
-    
+    <!-- CREATE CLIENT DIALOG MODAL -->
+    <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm">
+      <div class="bg-[#171717] border border-white/10 rounded-xl p-8 max-w-md w-full space-y-6">
+        <div class="flex justify-between items-start">
+          <h4 class="font-display text-xl font-bold text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#bef264]">person_add</span>
+            Onboard New Client
+          </h4>
+          <button
+            @click="showAddModal = false"
+            class="material-symbols-outlined text-gray-400 hover:text-[#bef264] p-1 cursor-pointer transition-colors"
+          >
+            close
+          </button>
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="space-y-4 font-sans text-sm">
+          <div v-if="submitError" class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
+            {{ submitError }}
+          </div>
+          
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Full Name</label>
+            <input
+              v-model="name"
+              type="text"
+              required
+              placeholder="e.g. Sarah Jenkins"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Company / Venture</label>
+            <input
+              v-model="company"
+              type="text"
+              placeholder="e.g. Elysian Branding Group"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="font-mono text-xs text-gray-400 block uppercase tracking-wider">Email Node</label>
+            <input
+              v-model="email"
+              type="email"
+              required
+              placeholder="e.g. sarah@elysian.com"
+              class="w-full bg-[#1e2020] text-white rounded-lg p-3 border border-white/5 focus:ring-1 focus:ring-[#bef264] outline-none"
+              :disabled="isSubmitting"
+            />
+          </div>
+
+          <div class="flex justify-end gap-2 text-sm pt-4">
+            <button
+              type="button"
+              @click="showAddModal = false"
+              :disabled="isSubmitting"
+              class="px-5 py-2.5 rounded-lg hover:bg-white/[0.05] transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="isSubmitting"
+              class="px-6 py-2.5 hover:bg-[#bef264]/80 bg-[#bef264] text-[#131f00] font-bold rounded-lg cursor-pointer transform active:scale-95 transition-all text-xs uppercase font-mono tracking-wider disabled:opacity-50 flex items-center gap-2"
+            >
+              <span v-if="isSubmitting" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+              Onboard Partner
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Plus, Users, MoreVertical, Copy, Mail, RefreshCw } from 'lucide-vue-next'
+import { ref, computed, onMounted } from 'vue'
 import { useApi } from '~/composables/useApi'
-import AddClientModal from '~/components/AddClientModal.vue'
 
 const api = useApi()
 
 const clients = ref([])
 const isLoading = ref(true)
-const isModalOpen = ref(false)
+const search = ref('')
+const showAddModal = ref(false)
 const resendingId = ref(null)
+
+// Form states
+const name = ref('')
+const company = ref('')
+const email = ref('')
+const isSubmitting = ref(false)
+const submitError = ref('')
+
+const filteredClients = computed(() => {
+  return clients.value.filter((client) => {
+    return (
+      client.name.toLowerCase().includes(search.value.toLowerCase()) ||
+      (client.company_name && client.company_name.toLowerCase().includes(search.value.toLowerCase())) ||
+      client.email.toLowerCase().includes(search.value.toLowerCase())
+    )
+  })
+})
 
 const fetchClients = async () => {
   try {
     const data = await api('/api/v1/clients')
-    clients.value = data
+    // Optionally fetch projects count for each client, but for now we just show 0 or mock
+    clients.value = data.map(c => ({...c, projectsCount: 0}))
   } catch (err) {
     console.error('Failed to fetch clients', err)
   } finally {
@@ -120,18 +289,47 @@ const fetchClients = async () => {
   }
 }
 
-const handleClientAdded = (newClient) => {
-  // Push the newly created client into the list so we don't have to refetch
-  clients.value.unshift(newClient)
+const handleSubmit = async () => {
+  submitError.value = ''
+  isSubmitting.value = true
+  try {
+    const newClient = await api('/api/v1/clients', {
+      method: 'POST',
+      body: {
+        name: name.value,
+        company_name: company.value || null,
+        email: email.value
+      }
+    })
+    
+    clients.value.unshift({...newClient, projectsCount: 0})
+    
+    // Reset states
+    name.value = ''
+    company.value = ''
+    email.value = ''
+    showAddModal.value = false
+  } catch (err) {
+    submitError.value = err.message || 'Failed to add client.'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const getInitials = (n) => {
+  if (!n) return '?'
+  return n.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase()
+}
+
+const toggleRole = () => {
+  alert("Roles Swapped! You are currently exploring the app as a client partner. Click 'Switch role' button at the bottom of the sidebar at any time to return to manager view.")
 }
 
 const copyPortalLink = async (clientId) => {
   try {
-    // We only get the portal_token from the Detail endpoint!
     const clientDetail = await api(`/api/v1/clients/${clientId}`)
     const portalUrl = `${window.location.origin}/portal/${clientDetail.portal_token}`
     
-    // Copy to clipboard
     await navigator.clipboard.writeText(portalUrl)
     alert('Portal link copied to clipboard!')
   } catch (err) {
