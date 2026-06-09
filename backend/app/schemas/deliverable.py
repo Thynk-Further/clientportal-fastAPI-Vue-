@@ -21,5 +21,9 @@ class DeliverableRead(BaseModel):
     version: int
     created_at: datetime
     updated_at: datetime
+    file_uploads: list['FileUploadRead'] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+from app.schemas.file import FileUploadRead
+DeliverableRead.model_rebuild()
